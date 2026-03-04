@@ -15,7 +15,7 @@ from tkinter import ttk, messagebox
 project_root = Path(__file__).parent
 sys.path.append(str(project_root))
 
-from visual.lexical_gui import LexicalAnalysisGUI
+from lexical_analysis import LexicalAnalysisGUI
 
 
 class CompilerMain:
