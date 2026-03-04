@@ -239,3 +239,4 @@ recordings/
 # Large binary files
 *.bin
 *.dat
+NEXUS_LANGUAGE_SPECIFICATION.md

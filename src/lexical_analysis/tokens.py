@@ -22,26 +22,48 @@ class TokenType(Enum):
     IDENTIFIER = auto()
     
     # Keywords
-    VAR = auto()           # Variable declaration
-    CONST = auto()         # Constant declaration
+    VAR = auto()           # Variable declaration (hold)
+    CONST = auto()         # Constant declaration (fixed)
     FUNC = auto()          # Function declaration
     RETURN = auto()        # Return statement
-    IF = auto()            # Conditional
-    ELSE = auto()          # Else clause
-    ELIF = auto()          # Elif clause
-    WHILE = auto()         # While loop
-    FOR = auto()           # For loop
-    BREAK = auto()         # Break statement
-    CONTINUE = auto()      # Continue statement
-    TRUE = auto()          # Boolean true
-    FALSE = auto()         # Boolean false
+    IF = auto()            # Conditional (when)
+    ELSE = auto()          # Else clause (otherwise)
+    ELIF = auto()          # Elif clause (otherwise when)
+    WHILE = auto()         # While loop (repeat)
+    FOR = auto()           # For loop (cycle)
+    BREAK = auto()         # Break statement (stop)
+    CONTINUE = auto()      # Continue statement (skip)
+    SWITCH = auto()        # Switch statement (choose)
+    CASE = auto()          # Case statement (option)
+    DEFAULT = auto()       # Default case
+    TRUE = auto()          # Boolean true (yes)
+    FALSE = auto()         # Boolean false (no)
     NULL = auto()          # Null value
     
+    # I/O Operations
+    PRINT = auto()         # Output statement (show)
+    INPUT = auto()         # Input statement (ask)
+    
     # Data Types
-    INT = auto()           # Integer type
-    FLOAT_TYPE = auto()    # Float type
-    STRING_TYPE = auto()   # String type
-    BOOL = auto()          # Boolean type
+    INT = auto()           # Integer type (num)
+    FLOAT_TYPE = auto()    # Decimal type (decimal)
+    STRING_TYPE = auto()   # String type (text)
+    BOOL = auto()          # Boolean type (flag)
+    
+    # Type Conversion Functions
+    TO_NUMBER = auto()     # Convert to number (toNumber)
+    TO_DECIMAL = auto()    # Convert to decimal (toDecimal)
+    TO_STRING = auto()     # Convert to string (toString)
+    TO_BOOLEAN = auto()    # Convert to boolean (toBoolean)
+    IS_NUMBER = auto()     # Check if number (isNumber)
+    
+    # String Functions
+    LENGTH = auto()        # String length function
+    UPPERCASE = auto()     # Convert to uppercase
+    LOWERCASE = auto()     # Convert to lowercase
+    TRIM = auto()          # Trim whitespace
+    SUBSTRING = auto()     # Extract substring
+    FORMAT = auto()        # String formatting
     
     # Operators
     PLUS = auto()          # +
@@ -130,32 +152,71 @@ class LexicalError(Exception):
         super().__init__(f"Lexical Error at line {line}, column {column}: {message}")
 
 
-# Keywords mapping for our custom language
+# Keywords mapping for NEXUS programming language
 KEYWORDS = {
-    'var': TokenType.VAR,
-    'const': TokenType.CONST,
-    'func': TokenType.FUNC,
-    'return': TokenType.RETURN,
-    'if': TokenType.IF,
-    'else': TokenType.ELSE,
-    'elif': TokenType.ELIF,
-    'while': TokenType.WHILE,
-    'for': TokenType.FOR,
-    'break': TokenType.BREAK,
-    'continue': TokenType.CONTINUE,
-    'true': TokenType.TRUE,
-    'false': TokenType.FALSE,
-    'null': TokenType.NULL,
-    'int': TokenType.INT,
-    'float': TokenType.FLOAT_TYPE,
-    'string': TokenType.STRING_TYPE,
-    'bool': TokenType.BOOL,
-    'and': TokenType.AND,
-    'or': TokenType.OR,
-    'not': TokenType.NOT,
-    'secure': TokenType.SECURE,
-    'validate': TokenType.VALIDATE,
-    'sanitize': TokenType.SANITIZE,
+    # Variable and constant declarations
+    'hold': TokenType.VAR,           # Variable declaration
+    'fixed': TokenType.CONST,        # Constant declaration
+    
+    # Data types
+    'num': TokenType.INT,            # Integer type
+    'decimal': TokenType.FLOAT_TYPE, # Decimal/float type
+    'text': TokenType.STRING_TYPE,   # String type
+    'flag': TokenType.BOOL,          # Boolean type
+    
+    # Function keywords
+    'func': TokenType.FUNC,          # Function declaration
+    'return': TokenType.RETURN,      # Return statement
+    
+    # Control flow
+    'when': TokenType.IF,            # Conditional statement
+    'otherwise': TokenType.ELSE,     # Else clause
+    'otherwise when': TokenType.ELIF, # Elif clause
+    
+    # Loop keywords
+    'repeat': TokenType.WHILE,       # While loop
+    'cycle': TokenType.FOR,          # For loop
+    'stop': TokenType.BREAK,         # Break statement
+    'skip': TokenType.CONTINUE,      # Continue statement
+    
+    # Switch statement
+    'choose': TokenType.SWITCH,      # Switch statement
+    'option': TokenType.CASE,        # Case statement
+    'default': TokenType.DEFAULT,    # Default case
+    
+    # Boolean values
+    'yes': TokenType.TRUE,           # Boolean true
+    'no': TokenType.FALSE,           # Boolean false
+    'null': TokenType.NULL,          # Null value
+    
+    # Logical operators (as words)
+    'and': TokenType.AND,            # Logical AND
+    'or': TokenType.OR,              # Logical OR
+    'not': TokenType.NOT,            # Logical NOT
+    
+    # I/O operations
+    'show': TokenType.PRINT,         # Output statement
+    'ask': TokenType.INPUT,          # Input statement
+    
+    # Security-aware keywords (keeping these unique)
+    'secure': TokenType.SECURE,      # Security context
+    'validate': TokenType.VALIDATE,  # Validate input
+    'sanitize': TokenType.SANITIZE,  # Sanitize data
+    
+    # Type conversion functions
+    'toNumber': TokenType.TO_NUMBER, # Convert to number
+    'toDecimal': TokenType.TO_DECIMAL, # Convert to decimal
+    'toString': TokenType.TO_STRING, # Convert to string
+    'toBoolean': TokenType.TO_BOOLEAN, # Convert to boolean
+    'isNumber': TokenType.IS_NUMBER, # Check if number
+    
+    # String functions
+    'length': TokenType.LENGTH,      # String length function
+    'uppercase': TokenType.UPPERCASE, # Convert to uppercase
+    'lowercase': TokenType.LOWERCASE, # Convert to lowercase
+    'trim': TokenType.TRIM,          # Trim whitespace
+    'substring': TokenType.SUBSTRING, # Extract substring
+    'format': TokenType.FORMAT,      # String formatting
 }
 
 # Operator mappings
@@ -165,7 +226,8 @@ OPERATORS = {
     '*': TokenType.MULTIPLY,
     '/': TokenType.DIVIDE,
     '%': TokenType.MODULO,
-    '**': TokenType.POWER,
+    '^': TokenType.POWER,        # Exponentiation operator
+    '**': TokenType.POWER,       # Alternative exponentiation
     '=': TokenType.ASSIGN,
     '+=': TokenType.PLUS_ASSIGN,
     '-=': TokenType.MINUS_ASSIGN,
