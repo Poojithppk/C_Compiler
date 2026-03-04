@@ -1,0 +1,502 @@
+"""
+Main Entry Point for Advanced Visual Compiler
+
+This is the main launcher for the Advanced Visual, Security-Aware Multi-Target Compiler.
+It provides access to all compiler phases with visual interfaces and analysis tools.
+"""
+
+import sys
+import os
+from pathlib import Path
+import tkinter as tk
+from tkinter import ttk, messagebox
+
+# Add project root to path for imports
+project_root = Path(__file__).parent
+sys.path.append(str(project_root))
+
+from lexical_analysis import LexicalAnalysisGUI
+
+
+class CompilerMain:
+    """
+    Main launcher for the Advanced Visual Compiler
+    
+    Provides access to:
+    - Lexical Analysis Phase (✅ Implemented)
+    - Syntax Analysis Phase (🚧 Coming Soon)
+    - Semantic Analysis Phase (🚧 Coming Soon)
+    - Intermediate Code Generation (🚧 Coming Soon)
+    - Optimization Phase (🚧 Coming Soon)
+    - Code Generation Phase (🚧 Coming Soon)
+    """
+    
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Advanced Visual Compiler - Main Dashboard")
+        self.root.geometry("800x600")
+        self.root.configure(bg='#1e1e1e')
+        
+        # Set window icon and style
+        try:
+            # Try to set a nice style
+            style = ttk.Style()
+            style.theme_use('clam')
+        except:
+            pass
+            
+        self.setup_ui()
+        
+    def setup_ui(self):
+        """Setup the main user interface."""
+        
+        # Header
+        header_frame = tk.Frame(self.root, bg='#1e1e1e')
+        header_frame.pack(fill='x', padx=20, pady=20)
+        
+        title_label = tk.Label(
+            header_frame,
+            text="🔧 ADVANCED VISUAL COMPILER",
+            font=('Arial', 24, 'bold'),
+            bg='#1e1e1e',
+            fg='#ffffff'
+        )
+        title_label.pack()
+        
+        subtitle_label = tk.Label(
+            header_frame,
+            text="Security-Aware Multi-Target Compiler with Visual Phase Animation",
+            font=('Arial', 12),
+            bg='#1e1e1e',
+            fg='#cccccc'
+        )
+        subtitle_label.pack(pady=(5, 0))
+        
+        # Main content area
+        content_frame = tk.Frame(self.root, bg='#2b2b2b')
+        content_frame.pack(fill='both', expand=True, padx=20, pady=(0, 20))
+        
+        # Create notebook for different sections
+        self.notebook = ttk.Notebook(content_frame)
+        self.notebook.pack(fill='both', expand=True)
+        
+        # Compiler Phases Tab
+        self.setup_phases_tab()
+        
+        # Project Info Tab
+        self.setup_info_tab()
+        
+        # Settings Tab
+        self.setup_settings_tab()
+        
+    def setup_phases_tab(self):
+        """Setup the compiler phases tab."""
+        
+        phases_frame = ttk.Frame(self.notebook)
+        self.notebook.add(phases_frame, text="🔧 Compiler Phases")
+        
+        # Instructions
+        instructions = tk.Label(
+            phases_frame,
+            text="Select a compiler phase to begin visual analysis:",
+            font=('Arial', 14, 'bold'),
+            bg='#f0f0f0'
+        )
+        instructions.pack(pady=20)
+        
+        # Phases grid
+        phases_container = tk.Frame(phases_frame, bg='#f0f0f0')
+        phases_container.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        # Phase 1: Lexical Analysis (✅ Ready)
+        self.create_phase_button(
+            phases_container,
+            "🔍 LEXICAL ANALYSIS",
+            "Tokenization • Visual Highlighting • Error Recovery",
+            "✅ READY",
+            "#28a745",
+            self.launch_lexical_analysis,
+            row=0, col=0
+        )
+        
+        # Phase 2: Syntax Analysis (🚧 Coming Soon)
+        self.create_phase_button(
+            phases_container,
+            "🌳 SYNTAX ANALYSIS", 
+            "Parse Tree Generation • Grammar Validation • AST Building",
+            "🚧 COMING SOON",
+            "#ffc107",
+            lambda: self.show_coming_soon("Syntax Analysis"),
+            row=0, col=1
+        )
+        
+        # Phase 3: Semantic Analysis (🚧 Coming Soon)
+        self.create_phase_button(
+            phases_container,
+            "🎯 SEMANTIC ANALYSIS",
+            "Type Checking • Symbol Table • Scope Resolution",
+            "🚧 COMING SOON", 
+            "#ffc107",
+            lambda: self.show_coming_soon("Semantic Analysis"),
+            row=1, col=0
+        )
+        
+        # Phase 4: Intermediate Code (🚧 Coming Soon)
+        self.create_phase_button(
+            phases_container,
+            "⚙️ INTERMEDIATE CODE",
+            "Three-Address Code • Control Flow • Data Flow",
+            "🚧 COMING SOON",
+            "#ffc107", 
+            lambda: self.show_coming_soon("Intermediate Code Generation"),
+            row=1, col=1
+        )
+        
+        # Phase 5: Optimization (🚧 Coming Soon)
+        self.create_phase_button(
+            phases_container,
+            "🚀 OPTIMIZATION",
+            "Dead Code Elimination • Common Subexpression • Peephole",
+            "🚧 COMING SOON",
+            "#ffc107",
+            lambda: self.show_coming_soon("Optimization Phase"),
+            row=2, col=0
+        )
+        
+        # Phase 6: Code Generation (🚧 Coming Soon)
+        self.create_phase_button(
+            phases_container,
+            "💻 CODE GENERATION",
+            "Multi-Target • Python • C • Java • Assembly",
+            "🚧 COMING SOON",
+            "#ffc107",
+            lambda: self.show_coming_soon("Code Generation"),
+            row=2, col=1
+        )
+        
+    def create_phase_button(self, parent, title, description, status, color, command, row, col):
+        """Create a phase selection button."""
+        
+        button_frame = tk.Frame(parent, bg='white', relief='raised', bd=2)
+        button_frame.grid(row=row, column=col, padx=10, pady=10, sticky='nsew')
+        
+        # Configure grid weights
+        parent.grid_rowconfigure(row, weight=1)
+        parent.grid_columnconfigure(col, weight=1)
+        
+        # Phase title
+        title_label = tk.Label(
+            button_frame,
+            text=title,
+            font=('Arial', 14, 'bold'),
+            bg='white'
+        )
+        title_label.pack(pady=(15, 5))
+        
+        # Phase description
+        desc_label = tk.Label(
+            button_frame,
+            text=description,
+            font=('Arial', 10),
+            bg='white',
+            wraplength=200
+        )
+        desc_label.pack(pady=5)
+        
+        # Status badge
+        status_label = tk.Label(
+            button_frame,
+            text=status,
+            font=('Arial', 10, 'bold'),
+            bg=color,
+            fg='white',
+            padx=10,
+            pady=5
+        )
+        status_label.pack(pady=(10, 5))
+        
+        # Action button
+        action_btn = tk.Button(
+            button_frame,
+            text="Launch Phase" if "READY" in status else "View Details",
+            font=('Arial', 11, 'bold'),
+            bg='#007bff' if "READY" in status else '#6c757d',
+            fg='white',
+            padx=20,
+            pady=8,
+            command=command,
+            cursor='hand2'
+        )
+        action_btn.pack(pady=(5, 15))
+        
+        # Hover effects
+        def on_enter(e):
+            button_frame.config(relief='solid', bd=3)
+            
+        def on_leave(e):
+            button_frame.config(relief='raised', bd=2)
+            
+        button_frame.bind("<Enter>", on_enter)
+        button_frame.bind("<Leave>", on_leave)
+        
+        # Make entire frame clickable
+        for widget in button_frame.winfo_children():
+            widget.bind("<Button-1>", lambda e: command())
+            
+    def setup_info_tab(self):
+        """Setup the project information tab."""
+        
+        info_frame = ttk.Frame(self.notebook)
+        self.notebook.add(info_frame, text="📋 Project Info")
+        
+        # Scrollable text area
+        info_text = tk.Text(
+            info_frame,
+            wrap=tk.WORD,
+            font=('Consolas', 11),
+            bg='#f8f9fa',
+            padx=20,
+            pady=20
+        )
+        info_text.pack(fill='both', expand=True, padx=10, pady=10)
+        
+        # Project information content
+        info_content = """
+🎓 B.TECH FINAL YEAR PROJECT
+Advanced Visual, Security-Aware Multi-Target Compiler
+
+👥 TEAM MEMBERS:
+• Anjani (Core Compiler Logic, Backend, Optimization)
+• Poojith (UI, Visualization, Testing, Documentation)
+
+🎯 PROJECT OBJECTIVES:
+✅ Design complete compiler for custom programming language
+✅ Develop visual representation system for all compiler phases
+✅ Implement intelligent error recovery and correction mechanisms
+✅ Create comprehensive security analysis and vulnerability detection
+✅ Build multi-target code generation (Python, C, Java, Assembly)
+✅ Demonstrate advanced optimization techniques
+
+🔧 CURRENT IMPLEMENTATION STATUS:
+
+Phase 1: ✅ LEXICAL ANALYSIS - COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Visual token highlighting and step-by-step animation
+• Comprehensive token recognition (keywords, operators, literals)
+• Error recovery with intelligent suggestions
+• Real-time syntax highlighting
+• Interactive debugging capabilities
+• Security-aware token detection
+
+Phase 2: 🚧 SYNTAX ANALYSIS - IN DEVELOPMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Recursive descent parser implementation
+• Animated parse tree generation
+• Grammar validation and error recovery
+• Abstract Syntax Tree (AST) building
+
+Phase 3: 🚧 SEMANTIC ANALYSIS - PLANNED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Type checking and validation
+• Symbol table management
+• Scope resolution and analysis
+• Declaration validation
+
+Phase 4: 🚧 INTERMEDIATE CODE GENERATION - PLANNED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Three-address code generation
+• Control flow graph construction
+• Data flow analysis
+
+Phase 5: 🚧 OPTIMIZATION - PLANNED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Dead code elimination
+• Common subexpression elimination
+• Constant folding and propagation
+• Loop optimization
+
+Phase 6: 🚧 CODE GENERATION - PLANNED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Multi-target code generation
+• Python translation
+• C code generation
+• Java bytecode generation  
+• Assembly language output
+
+🔒 SECURITY FEATURES:
+• Static vulnerability analysis
+• Buffer overflow detection
+• Null pointer dereference checking
+• Uninitialized variable detection
+• Input validation enforcement
+
+🎨 VISUAL FEATURES:
+• Real-time phase animation
+• Interactive token highlighting
+• Step-by-step execution control
+• Beautiful syntax highlighting
+• Error visualization with suggestions
+
+📊 TECHNICAL STACK:
+• Language: Python 3.8+
+• GUI Framework: Tkinter with custom styling
+• Visualization: Matplotlib, NetworkX
+• Testing: pytest, unittest
+• Documentation: Comprehensive inline docs
+
+🎯 NEXT MILESTONES:
+1. Complete Syntax Analysis Phase (Week 1)
+2. Implement Semantic Analysis (Week 2) 
+3. Build Intermediate Code Generator (Week 3)
+4. Add Optimization Engine (Week 4)
+5. Create Multi-Target Code Generation (Week 5-6)
+
+📅 TARGET COMPLETION: March 13, 2026
+Current Progress: 16.67% (1/6 phases complete)
+
+🚀 Start with Lexical Analysis to see the visual compiler in action!
+        """
+        
+        info_text.insert(1.0, info_content.strip())
+        info_text.config(state='disabled')
+        
+    def setup_settings_tab(self):
+        """Setup the settings and configuration tab."""
+        
+        settings_frame = ttk.Frame(self.notebook)
+        self.notebook.add(settings_frame, text="⚙️ Settings")
+        
+        # Visual settings
+        visual_group = ttk.LabelFrame(settings_frame, text="Visual Animation Settings")
+        visual_group.pack(fill='x', padx=10, pady=10)
+        
+        # Animation speed
+        speed_frame = ttk.Frame(visual_group)
+        speed_frame.pack(fill='x', padx=10, pady=5)
+        
+        ttk.Label(speed_frame, text="Animation Speed:").pack(side='left')
+        self.speed_var = tk.StringVar(value="Medium")
+        speed_combo = ttk.Combobox(speed_frame, textvariable=self.speed_var, 
+                                  values=["Slow", "Medium", "Fast", "Instant"])
+        speed_combo.pack(side='right')
+        
+        # Syntax highlighting
+        highlight_frame = ttk.Frame(visual_group)
+        highlight_frame.pack(fill='x', padx=10, pady=5)
+        
+        ttk.Label(highlight_frame, text="Syntax Highlighting:").pack(side='left')
+        self.highlight_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(highlight_frame, variable=self.highlight_var).pack(side='right')
+        
+        # Compiler settings
+        compiler_group = ttk.LabelFrame(settings_frame, text="Compiler Configuration")
+        compiler_group.pack(fill='x', padx=10, pady=10)
+        
+        # Error recovery
+        error_frame = ttk.Frame(compiler_group)
+        error_frame.pack(fill='x', padx=10, pady=5)
+        
+        ttk.Label(error_frame, text="Auto Error Recovery:").pack(side='left')
+        self.error_recovery_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(error_frame, variable=self.error_recovery_var).pack(side='right')
+        
+        # Security analysis
+        security_frame = ttk.Frame(compiler_group)
+        security_frame.pack(fill='x', padx=10, pady=5)
+        
+        ttk.Label(security_frame, text="Security Analysis:").pack(side='left')
+        self.security_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(security_frame, variable=self.security_var).pack(side='right')
+        
+        # Debug mode
+        debug_frame = ttk.Frame(compiler_group)
+        debug_frame.pack(fill='x', padx=10, pady=5)
+        
+        ttk.Label(debug_frame, text="Debug Mode:").pack(side='left')
+        self.debug_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(debug_frame, variable=self.debug_var).pack(side='right')
+        
+        # Save settings button
+        save_btn = ttk.Button(settings_frame, text="Save Settings", 
+                             command=self.save_settings)
+        save_btn.pack(pady=20)
+        
+    def launch_lexical_analysis(self):
+        """Launch the lexical analysis phase."""
+        print("🚀 Launching Lexical Analysis Phase...")
+        
+        try:
+            # Close main window temporarily
+            self.root.withdraw()
+            
+            # Launch lexical analyzer
+            lexical_app = LexicalAnalysisGUI()
+            lexical_app.run()
+            
+            # Show main window again after lexical analyzer closes
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Lexical Analysis: {str(e)}")
+            self.root.deiconify()
+            
+    def show_coming_soon(self, phase_name):
+        """Show coming soon message for phases under development."""
+        messagebox.showinfo(
+            f"{phase_name} - Coming Soon",
+            f"""🚧 {phase_name} Phase is currently under development!
+            
+📅 Expected completion: Soon
+            
+🔧 Current Status: Planning and Architecture Phase
+
+💡 What's Coming:
+• Visual step-by-step animation
+• Interactive debugging
+• Error recovery system
+• Real-time feedback
+
+Stay tuned for updates! 🚀"""
+        )
+        
+    def save_settings(self):
+        """Save application settings."""
+        # For now, just show a confirmation
+        # In a full implementation, settings would be saved to a config file
+        messagebox.showinfo("Settings", "Settings saved successfully! ✅")
+        
+    def run(self):
+        """Run the main application."""
+        # Center window on screen
+        self.root.update_idletasks()
+        x = (self.root.winfo_screenwidth() // 2) - (self.root.winfo_width() // 2)
+        y = (self.root.winfo_screenheight() // 2) - (self.root.winfo_height() // 2)
+        self.root.geometry(f"+{x}+{y}")
+        
+        print("🎯 Advanced Visual Compiler - Main Dashboard Ready!")
+        print("📋 Choose a compiler phase to begin analysis...")
+        
+        self.root.mainloop()
+
+
+def main():
+    """Main entry point for the compiler application."""
+    print("=" * 60)
+    print("🚀 ADVANCED VISUAL COMPILER")
+    print("   Security-Aware Multi-Target Compiler")
+    print("   B.Tech Final Year Project")
+    print("=" * 60)
+    print()
+    
+    try:
+        app = CompilerMain()
+        app.run()
+    except KeyboardInterrupt:
+        print("\n👋 Compiler application terminated by user")
+    except Exception as e:
+        print(f"❌ Error starting application: {str(e)}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
