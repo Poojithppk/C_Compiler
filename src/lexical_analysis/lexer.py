@@ -132,7 +132,7 @@ class VisualLexicalAnalyzer:
             self._scan_comment()
             
         # Multi-character operators
-        elif char in '=!<>&|+-*':
+        elif char in '=!<>&|+-*^':
             self._scan_operator(start_pos, start_col, char)
             
         # Single character tokens
@@ -354,23 +354,39 @@ class VisualLexicalAnalyzer:
 def test_lexical_analyzer():
     """Test function to demonstrate the lexical analyzer."""
     
-    # Sample code in our custom language
+    # Sample code in NEXUS programming language
     sample_code = '''
-    // This is a test program
-    var x: int = 42;
-    var message: string = "Hello, World!";
-    var pi: float = 3.14159;
-    var isValid: bool = true;
+    // This is a test program in NEXUS
+    hold x: num = 42;
+    hold message: text = "Hello, NEXUS World!";
+    hold pi: decimal = 3.14159;
+    hold isValid: flag = yes;
     
-    func calculateArea(radius: float) -> float {
+    func calculateArea(radius: decimal) -> decimal {
         secure validate(radius > 0);
-        return pi * radius ** 2;
+        return pi * radius ^ 2;
     }
     
-    if (x >= 10 && isValid) {
-        print(message);
-    } else {
-        print("Invalid input");
+    when (x >= 10 && isValid) {
+        show message;
+    } otherwise {
+        show "Invalid input";
+    }
+
+    // Loop with NEXUS syntax
+    cycle (hold i: num = 0; i < 5; i += 1) {
+        show "Count: " + toString(i);
+    }
+
+    // Switch statement
+    choose (x) {
+        option 42: {
+            show "The answer!";
+            stop;
+        }
+        default: {
+            show "Not the answer";
+        }
     }
     '''
     

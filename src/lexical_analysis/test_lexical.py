@@ -58,12 +58,12 @@ def test_lexical_analyzer():
     """Test the lexical analyzer with sample code."""
     print("🧪 Testing Lexical Analyzer...")
     
-    # Sample code
+    # Sample code in NEXUS language
     sample_code = '''
-    var count: int = 10;
-    var message: string = "Hello World";
-    if (count > 5) {
-        print(message);
+    hold count: num = 10;
+    hold message: text = "Hello NEXUS";
+    when (count > 5) {
+        show message;
     }
     '''
     
