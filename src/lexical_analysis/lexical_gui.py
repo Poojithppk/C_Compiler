@@ -42,6 +42,8 @@ class LexicalAnalysisGUI:
         self.current_token_index = 0
         self.is_analyzing = False
         self.step_mode = True
+        self.analysis_completed = False
+        self.transition_callback = None
         
         # Visual elements
         self.setup_ui()
@@ -256,6 +258,15 @@ class LexicalAnalysisGUI:
             command=self.reset_analysis
         )
         self.reset_btn.pack(side='left', padx=5)
+        
+        # Syntax Analysis Transition Button
+        self.syntax_btn = ttk.Button(
+            button_frame,
+            text="🌳 Proceed to Syntax Analysis",
+            command=self.launch_syntax_analysis,
+            state='disabled'
+        )
+        self.syntax_btn.pack(side='left', padx=15)
         
         # Animation controls
         anim_frame = ttk.Frame(control_frame)
@@ -506,11 +517,16 @@ choose (dayNumber) {
     def analysis_complete(self):
         """Handle completion of analysis."""
         self.is_analyzing = False
+        self.analysis_completed = True
         self.analyze_btn.config(state='normal')
         self.step_btn.config(state='disabled')
+        self.syntax_btn.config(state='normal')  # Enable syntax analysis transition
         
         self.update_statistics()
-        self.status_label.config(text=f"Analysis complete! Found {len(self.tokens)} tokens, {len(self.errors)} errors.")
+        status_msg = f"✅ Analysis complete! Found {len(self.tokens)} tokens, {len(self.errors)} errors."
+        if len(self.errors) == 0:
+            status_msg += " Ready for Syntax Analysis!"
+        self.status_label.config(text=status_msg)
         
     def update_statistics(self):
         """Update the statistics display."""
@@ -557,6 +573,8 @@ choose (dayNumber) {
         
         self.analyze_btn.config(state='normal')
         self.step_btn.config(state='disabled')
+        self.syntax_btn.config(state='disabled')  # Reset syntax analysis button
+        self.analysis_completed = False
         
         # Clear highlights
         self.source_text.tag_remove("current_token", 1.0, tk.END)
@@ -565,6 +583,61 @@ choose (dayNumber) {
             self.stats_text.config(state='normal')
             self.stats_text.delete(1.0, tk.END)
             self.stats_text.config(state='disabled')
+    
+    def launch_syntax_analysis(self):
+        """Launch syntax analysis with current tokens."""
+        if not self.analysis_completed or not self.tokens:
+            messagebox.showwarning(
+                "Syntax Analysis",
+                "Please complete lexical analysis first!"
+            )
+            return
+        
+        if self.errors:
+            proceed = messagebox.askyesno(
+                "Lexical Errors Detected",
+                f"Found {len(self.errors)} lexical errors.\n\nProceed to syntax analysis anyway?\n\nNote: Syntax analysis may fail with lexical errors."
+            )
+            if not proceed:
+                return
+        
+        # Show transition message
+        result = messagebox.showinfo(
+            "🌳 Syntax Analysis",
+            f"✅ Lexical Analysis Results:\n\n📊 {len(self.tokens)} tokens generated\n⚠️ {len(self.errors)} lexical errors\n\n🚀 Launching Syntax Analysis Phase...\n\nTokens will be passed to syntax analysis for parsing."
+        )
+        
+        try:
+            # Close lexical analysis window
+            self.root.withdraw()
+            
+            # Import and launch syntax analysis
+            from syntax_analysis import SyntaxAnalysisGUI
+            import tkinter as tk
+            
+            # Create new window for syntax analysis
+            syntax_root = tk.Tk()
+            syntax_app = SyntaxAnalysisGUI(syntax_root)
+            
+            # Pass tokens to syntax analysis
+            syntax_app.load_tokens_from_lexical(self.tokens, self.errors)
+            
+            # Run syntax analysis
+            syntax_root.mainloop()
+            
+            # Show lexical analysis again after syntax analysis closes
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror(
+                "Error",
+                f"Failed to launch Syntax Analysis:\n\n{str(e)}\n\nPlease check that syntax analysis module is properly installed."
+            )
+            self.root.deiconify()
+            
+    def set_transition_callback(self, callback):
+        """Set callback for phase transition."""
+        self.transition_callback = callback
             
     def show_error(self, message):
         """Show error message."""

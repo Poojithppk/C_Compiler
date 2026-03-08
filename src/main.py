@@ -16,6 +16,7 @@ project_root = Path(__file__).parent
 sys.path.append(str(project_root))
 
 from lexical_analysis import LexicalAnalysisGUI
+from syntax_analysis import SyntaxAnalysisGUI
 
 
 class CompilerMain:
@@ -24,7 +25,7 @@ class CompilerMain:
     
     Provides access to:
     - Lexical Analysis Phase (✅ Implemented)
-    - Syntax Analysis Phase (🚧 Coming Soon)
+    - Syntax Analysis Phase (✅ Implemented)
     - Semantic Analysis Phase (🚧 Coming Soon)
     - Intermediate Code Generation (🚧 Coming Soon)
     - Optimization Phase (🚧 Coming Soon)
@@ -119,14 +120,25 @@ class CompilerMain:
             row=0, col=0
         )
         
-        # Phase 2: Syntax Analysis (🚧 Coming Soon)
+        # Sequential Workflow Button
+        self.create_phase_button(
+            phases_container,
+            "🔄 LEXICAL → SYNTAX",
+            "Run Lexical Analysis then Syntax Analysis in sequence",
+            "✅ READY",
+            "#17a2b8",
+            self.launch_sequential_analysis,
+            row=2, col=0
+        )
+        
+        # Phase 2: Syntax Analysis (✅ Ready)
         self.create_phase_button(
             phases_container,
             "🌳 SYNTAX ANALYSIS", 
             "Parse Tree Generation • Grammar Validation • AST Building",
-            "🚧 COMING SOON",
-            "#ffc107",
-            lambda: self.show_coming_soon("Syntax Analysis"),
+            "✅ READY",
+            "#28a745",
+            self.launch_syntax_analysis,
             row=0, col=1
         )
         
@@ -438,6 +450,66 @@ Current Progress: 16.67% (1/6 phases complete)
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to launch Lexical Analysis: {str(e)}")
+            self.root.deiconify()
+            
+    def launch_syntax_analysis(self):
+        """Launch the syntax analysis phase."""
+        print("🌳 Launching Syntax Analysis Phase...")
+        
+        try:
+            # Close main window temporarily
+            self.root.withdraw()
+            
+            # Create a new root window for syntax analysis
+            syntax_root = tk.Tk()
+            
+            # Create and run syntax analyzer
+            syntax_app = SyntaxAnalysisGUI(syntax_root)
+            syntax_root.mainloop()
+            
+            # Show main window again after syntax analyzer closes
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Syntax Analysis: {str(e)}")
+            self.root.deiconify()
+    
+    def launch_sequential_analysis(self):
+        """Launch lexical analysis followed by syntax analysis."""
+        print("🔄 Launching Sequential Analysis: Lexical → Syntax...")
+        
+        try:
+            # Close main window temporarily
+            self.root.withdraw()
+            
+            # Phase 1: Lexical Analysis
+            print("📍 Phase 1: Starting Lexical Analysis...")
+            lexical_app = LexicalAnalysisGUI()
+            lexical_app.run()
+            
+            # Ask user if they want to proceed to syntax analysis
+            proceed = messagebox.askyesno(
+                "Sequential Analysis", 
+                "✅ Lexical Analysis completed!\n\n🌳 Proceed to Syntax Analysis phase?",
+                icon='question'
+            )
+            
+            if proceed:
+                # Phase 2: Syntax Analysis
+                print("📍 Phase 2: Starting Syntax Analysis...")
+                syntax_root = tk.Tk()
+                syntax_app = SyntaxAnalysisGUI(syntax_root)
+                syntax_root.mainloop()
+                
+                messagebox.showinfo("Sequential Analysis", "✅ Both phases completed successfully!")
+            else:
+                print("📍 Sequential analysis stopped after lexical phase.")
+            
+            # Show main window again
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Sequential Analysis: {str(e)}")
             self.root.deiconify()
             
     def show_coming_soon(self, phase_name):
