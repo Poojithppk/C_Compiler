@@ -343,50 +343,11 @@ class LexicalAnalysisGUI:
         
     def load_sample(self):
         """Load sample code into the editor."""
-        sample_code = '''// Sample Program in NEXUS Programming Language
-hold x: num = 42;
-hold message: text = "Hello, NEXUS Compiler!";
-hold pi: decimal = 3.14159;
-hold isActive: flag = yes;
-
-// Function with security validation
-func calculateArea(radius: decimal) -> decimal {
-    secure validate(radius > 0);
-    return pi * radius ^ 2;
-}
-
-// Conditional with logical operators
-when (x >= 10 && isActive) {
-    show message;
-    hold result: decimal = calculateArea(5.0);
-} otherwise {
-    show "Conditions not met";
-}
-
-// Loop example
-cycle (hold i: num = 0; i < 5; i += 1) {
-    show "Iteration: " + toString(i);
-}
-
-// Switch statement example
-hold dayNumber: num = 3;
-choose (dayNumber) {
-    option 1: {
-        show "Monday";
-        stop;
-    }
-    option 2: {
-        show "Tuesday"; 
-        stop;
-    }
-    option 3: {
-        show "Wednesday";
-        stop;
-    }
-    default: {
-        show "Other day";
-    }
-}'''
+        sample_code = '''// Simple Program - Sum of Two Numbers
+hold num1 = 5;
+hold num2 = 10;
+hold total = num1 + num2;
+show total;'''
         
         self.source_text.delete(1.0, tk.END)
         self.source_text.insert(1.0, sample_code)

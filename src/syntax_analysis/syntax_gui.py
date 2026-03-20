@@ -379,34 +379,11 @@ class SyntaxAnalysisGUI:
     
     def _get_sample_code(self) -> str:
         """Return sample NEXUS code for demonstration."""
-        return '''// Sample NEXUS Program - Secure Calculator
-secure {
-    hold x: num = 10;
-    fixed PI: decimal = 3.14159;
-    
-    func calculator(a: num, b: num) -> num {
-        hold result: num = 0;
-        
-        when (validate(a, a > 0) and validate(b, b > 0)) {
-            result = a + b;
-        } otherwise {
-            show "Invalid input detected!";
-            return 0;
-        }
-        
-        return sanitize(result);
-    }
-    
-    hold sum: num = calculator(x, 5);
-    show "Result: " + sum;
-    
-    cycle (hold i: num = 0; i < 3; i = i + 1) {
-        when (i == 1) {
-            skip;
-        }
-        show "Number: " + i;
-    }
-}'''
+        return '''// Simple Program - Sum of Two Numbers
+hold num1 = 5;
+hold num2 = 10;
+hold total = num1 + num2;
+show total;'''
     
     # =====================
     # FILE OPERATIONS
@@ -661,8 +638,20 @@ secure {
         """Update parse tree display."""
         self.parse_tree.delete(*self.parse_tree.get_children())
         
-        if self.current_ast:
-            self._add_tree_node("", self.current_ast, "Program")
+        if not self.current_ast:
+            self.parse_tree.insert("", "end", text="❌ No AST available", values=("N/A", "", ""))
+            return
+        
+        # Show summary info
+        summary_id = self.parse_tree.insert("", "end", text="📊 Parse Summary", values=("Metadata", "", ""))
+        
+        self.parse_tree.insert(summary_id, "end", text=f"✅ Parser Status: Success", values=("Info", "", ""))
+        self.parse_tree.insert(summary_id, "end", text=f"❌ Parse Errors: {len(self.parser.errors) if self.parser else 0}", values=("Info", "", ""))
+        self.parse_tree.insert(summary_id, "end", text=f"⚠️ Warnings: {len(self.parser.warnings) if self.parser else 0}", values=("Info", "", ""))
+        
+        # Add the AST
+        ast_id = self.parse_tree.insert("", "end", text="🌳 Abstract Syntax Tree", values=("AST", "", ""))
+        self._add_tree_node(ast_id, self.current_ast, self.current_ast.__class__.__name__)
     
     def _add_tree_node(self, parent: str, node: ASTNode, text: str) -> str:
         """Recursively add AST node to tree view."""
@@ -711,28 +700,78 @@ secure {
                 printer = ASTPrinter()
                 ast_str = printer.print_ast(self.current_ast)
                 self.ast_text.insert(1.0, ast_str)
-            except ImportError:
+            except Exception as e:
                 # Fallback if ASTPrinter not available
+                self.ast_text.insert(1.0, f"Error loading AST printer: {str(e)}\n\n")
                 ast_str = self._simple_ast_print(self.current_ast)
-                self.ast_text.insert(1.0, ast_str)
+                self.ast_text.insert(tk.END, ast_str)
+        else:
+            self.ast_text.insert(1.0, "No AST available. Run syntax analysis first.")
         
         self.ast_text.config(state='disabled')
     
     def _simple_ast_print(self, node: ASTNode, indent: int = 0) -> str:
         """Simple AST printing fallback."""
-        result = "  " * indent + node.__class__.__name__
+        if node is None:
+            return ""
         
-        if hasattr(node, 'name'):
-            result += f" ({node.name})"
-        elif hasattr(node, 'value'):
-            result += f" = {node.value}"
+        result = "  " * indent + "📍 " + node.__class__.__name__
+        
+        # Add node-specific info
+        if hasattr(node, 'name') and node.name:
+            result += f" (name: {node.name})"
+        elif hasattr(node, 'value') and node.value is not None:
+            result += f" (value: {node.value})"
+        elif hasattr(node, 'lexeme') and node.lexeme:
+            result += f" (lexeme: {node.lexeme})"
+        elif hasattr(node, 'operator') and node.operator:
+            result += f" (op: {node.operator})"
+        
+        # Add line/column info
+        if hasattr(node, 'line') and node.line:
+            result += f" [L{node.line}:C{node.column}]" if hasattr(node, 'column') else f" [L{node.line}]"
         
         result += "\n"
         
-        # Add children
+        # Add children recursively
         if hasattr(node, 'statements') and node.statements:
-            for stmt in node.statements:
-                result += self._simple_ast_print(stmt, indent + 1)
+            for i, stmt in enumerate(node.statements):
+                result += "  " * (indent + 1) + f"├─ Statement[{i}]:\n"
+                result += self._simple_ast_print(stmt, indent + 2)
+        
+        if hasattr(node, 'body') and node.body:
+            result += "  " * (indent + 1) + "├─ Body:\n"
+            result += self._simple_ast_print(node.body, indent + 2)
+        
+        if hasattr(node, 'expression') and node.expression:
+            result += "  " * (indent + 1) + "├─ Expression:\n"
+            result += self._simple_ast_print(node.expression, indent + 2)
+        
+        if hasattr(node, 'left') and node.left:
+            result += "  " * (indent + 1) + "├─ Left:\n"
+            result += self._simple_ast_print(node.left, indent + 2)
+        
+        if hasattr(node, 'right') and node.right:
+            result += "  " * (indent + 1) + "├─ Right:\n"
+            result += self._simple_ast_print(node.right, indent + 2)
+        
+        if hasattr(node, 'initializer') and node.initializer:
+            result += "  " * (indent + 1) + "├─ Initializer:\n"
+            result += self._simple_ast_print(node.initializer, indent + 2)
+        
+        if hasattr(node, 'parameters') and node.parameters:
+            result += "  " * (indent + 1) + f"├─ Parameters: {len(node.parameters)}\n"
+            for i, param in enumerate(node.parameters):
+                result += self._simple_ast_print(param, indent + 2)
+        
+        if hasattr(node, 'arguments') and node.arguments:
+            result += "  " * (indent + 1) + f"├─ Arguments: {len(node.arguments)}\n"
+            for i, arg in enumerate(node.arguments):
+                result += self._simple_ast_print(arg, indent + 2)
+        
+        if hasattr(node, 'callee') and node.callee:
+            result += "  " * (indent + 1) + "├─ Callee:\n"
+            result += self._simple_ast_print(node.callee, indent + 2)
         
         return result
     
@@ -740,48 +779,82 @@ secure {
         """Update errors and warnings display."""
         self.error_tree.delete(*self.error_tree.get_children())
         
-        if self.parser:
-            # Add errors
-            for error in self.parser.get_errors():
-                self.error_tree.insert(
-                    '', 'end',
-                    values=('Error', error.token.line, error.token.column, error.message),
-                    tags=('error',)
-                )
+        if not self.parser:
+            self.error_tree.insert('', 'end', values=('Info', '0', '0', 'No parser available'))
+            return
+        
+        errors = self.parser.get_errors() if hasattr(self.parser, 'get_errors') else self.parser.errors
+        warnings = self.parser.get_warnings() if hasattr(self.parser, 'get_warnings') else self.parser.warnings
+        
+        if not errors and not warnings:
+            self.error_tree.insert('', 'end', 
+                values=('✅ Success', '0', '0', 'No errors or warnings found!'),
+                tags=('success',))
+            return
+        
+        # Add errors
+        for error in errors:
+            error_msg = str(error.message) if hasattr(error, 'message') else str(error)
+            line = str(error.token.line) if hasattr(error, 'token') else '0'
+            col = str(error.token.column) if hasattr(error, 'token') else '0'
             
-            # Add warnings
-            for warning in self.parser.get_warnings():
-                self.error_tree.insert(
-                    '', 'end',
-                    values=('Warning', '', '', warning),
-                    tags=('warning',)
-                )
+            self.error_tree.insert(
+                '', 'end',
+                values=('❌ Error', line, col, error_msg),
+                tags=('error',)
+            )
+        
+        # Add warnings
+        for warning in warnings:
+            self.error_tree.insert(
+                '', 'end',
+                values=('⚠️ Warning', '', '', str(warning)),
+                tags=('warning',)
+            )
         
         # Configure tags
         self.error_tree.tag_configure('error', foreground='red')
         self.error_tree.tag_configure('warning', foreground='orange')
+        self.error_tree.tag_configure('success', foreground='green')
     
     def _update_steps_display(self):
         """Update parsing steps display."""
         self.steps_tree.delete(*self.steps_tree.get_children())
         
-        for i, step in enumerate(self.parse_steps):
-            self.steps_tree.insert(
-                '', 'end',
-                values=(
-                    step.get('rule', ''),
-                    step.get('position', ''),
-                    step.get('token', ''),
-                    step.get('description', '')
-                )
-            )
+        if not self.parse_steps:
+            self.steps_tree.insert('', 'end', 
+                values=('', '', '', 'No parsing steps available'),
+                tags=('info',))
+        else:
+            # Add header with step count
+            header = self.steps_tree.insert('', 'end',
+                values=('', '', '', f'Total Parsing Steps: {len(self.parse_steps)}'),
+                tags=('header',))
+            
+            # Add each step
+            for i, step in enumerate(self.parse_steps):
+                step_num = f"Step {i+1}/{len(self.parse_steps)}"
+                rule = step.get('rule', 'unknown')
+                token = step.get('token', 'EOF')
+                description = step.get('description', '')
+                line = step.get('line', '')
+                col = step.get('column', '')
+                pos = step.get('position', '')
+                
+                # Format the display
+                display_token = f"{token}" + (f" @L{line}:C{col}" if line else "")
+                display_desc = f"{description[:50]}" + ("..." if len(description) > 50 else "")
+                
+                self.steps_tree.insert('', 'end',
+                    values=(rule, display_token, pos, display_desc),
+                    tags=('step',))
         
         self._update_step_label()
     
     def _update_step_label(self):
         """Update step counter label."""
         total_steps = len(self.parse_steps)
-        self.step_label.config(text=f"Step: {self.current_step}/{total_steps}")
+        self.step_label.config(text=f"Steps: {total_steps} | Current: {self.current_step}")
         
         if total_steps > 0 and self.current_step <= total_steps:
             # Highlight current step
@@ -789,13 +862,17 @@ secure {
                 self.steps_tree.item(item, tags=())
             
             if self.current_step > 0:
-                items = self.steps_tree.get_children()
-                if self.current_step <= len(items):
-                    self.steps_tree.item(items[self.current_step - 1], tags=('current',))
-                    self.steps_tree.see(items[self.current_step - 1])
+                items = list(self.steps_tree.get_children())
+                # Skip the header (first item)
+                if len(items) > 1 and self.current_step <= len(items) - 1:
+                    self.steps_tree.item(items[self.current_step], tags=('current',))
+                    self.steps_tree.see(items[self.current_step])
         
-        # Configure current step tag
-        self.steps_tree.tag_configure('current', background='#264f78')
+        # Configure tags
+        self.steps_tree.tag_configure('header', background='#366aa3', foreground='white')
+        self.steps_tree.tag_configure('step', background='#1e1e1e', foreground='#d4d4d4')
+        self.steps_tree.tag_configure('current', background='#264f78', foreground='#ffffff')
+        self.steps_tree.tag_configure('info', foreground='#888888')
     
     def _update_step_display(self, step_info: dict):
         """Update display for current step."""

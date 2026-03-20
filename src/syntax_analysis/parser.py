@@ -747,9 +747,9 @@ class Parser:
         return self._previous()
     
     def _skip_whitespace(self):
-        """Skip over whitespace tokens like newlines."""
+        """Skip over whitespace tokens like newlines and comments."""
         while (self.current < len(self.tokens) and 
-               self.tokens[self.current].token_type == TokenType.NEWLINE):
+               self.tokens[self.current].token_type in (TokenType.NEWLINE, TokenType.COMMENT)):
             self.current += 1
     
     def _is_at_end(self) -> bool:
@@ -804,17 +804,19 @@ class Parser:
     
     def _record_step(self, rule: str, description: str) -> None:
         """Record parsing step for visual debugging."""
-        if self.step_mode:
-            step = {
-                'rule': rule,
-                'description': description,
-                'position': self.current,
-                'token': self._current_token().lexeme if not self._is_at_end() else 'EOF'
-            }
-            self.parse_steps.append(step)
-            
-            if self.step_callback:
-                self.step_callback(step)
+        # Always record steps for debugging/visualization
+        step = {
+            'rule': rule,
+            'description': description,
+            'position': self.current,
+            'token': self._current_token().lexeme if not self._is_at_end() else 'EOF',
+            'line': self._current_token().line if not self._is_at_end() else 0,
+            'column': self._current_token().column if not self._is_at_end() else 0
+        }
+        self.parse_steps.append(step)
+        
+        if self.step_mode and self.step_callback:
+            self.step_callback(step)
     
     def _log_errors(self) -> None:
         """Log all parsing errors."""
