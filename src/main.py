@@ -17,6 +17,7 @@ sys.path.append(str(project_root))
 
 from lexical_analysis import LexicalAnalysisGUI
 from syntax_analysis import SyntaxAnalysisGUI
+from semantic_analysis import SemanticAnalysisGUI
 
 
 class CompilerMain:
@@ -123,11 +124,11 @@ class CompilerMain:
         # Sequential Workflow Button
         self.create_phase_button(
             phases_container,
-            "🔄 LEXICAL → SYNTAX",
-            "Run Lexical Analysis then Syntax Analysis in sequence",
+            "🔄 LEXICAL → SYNTAX → SEMANTIC",
+            "Run all three phases in sequence",
             "✅ READY",
             "#17a2b8",
-            self.launch_sequential_analysis,
+            self.launch_full_sequential_analysis,
             row=2, col=0
         )
         
@@ -142,14 +143,14 @@ class CompilerMain:
             row=0, col=1
         )
         
-        # Phase 3: Semantic Analysis (🚧 Coming Soon)
+        # Phase 3: Semantic Analysis (✅ Ready)
         self.create_phase_button(
             phases_container,
             "🎯 SEMANTIC ANALYSIS",
-            "Type Checking • Symbol Table • Scope Resolution",
-            "🚧 COMING SOON", 
-            "#ffc107",
-            lambda: self.show_coming_soon("Semantic Analysis"),
+            "Type Checking • Symbol Table • Scope Validation",
+            "✅ READY",
+            "#28a745",
+            self.launch_semantic_analysis,
             row=1, col=0
         )
         
@@ -307,12 +308,12 @@ Phase 2: 🚧 SYNTAX ANALYSIS - IN DEVELOPMENT
 • Grammar validation and error recovery
 • Abstract Syntax Tree (AST) building
 
-Phase 3: 🚧 SEMANTIC ANALYSIS - PLANNED
+Phase 3: ✅ SEMANTIC ANALYSIS - COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Symbol table management and tracking
 • Type checking and validation
-• Symbol table management
-• Scope resolution and analysis
-• Declaration validation
+• Scope resolution and nesting
+• Semantic error detection and reporting
 
 Phase 4: 🚧 INTERMEDIATE CODE GENERATION - PLANNED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -357,14 +358,15 @@ Phase 6: 🚧 CODE GENERATION - PLANNED
 • Documentation: Comprehensive inline docs
 
 🎯 NEXT MILESTONES:
-1. Complete Syntax Analysis Phase (Week 1)
-2. Implement Semantic Analysis (Week 2) 
-3. Build Intermediate Code Generator (Week 3)
-4. Add Optimization Engine (Week 4)
-5. Create Multi-Target Code Generation (Week 5-6)
+1. ✅ Lexical Analysis Phase - COMPLETE
+2. 🚧 Syntax Analysis Phase - IN PROGRESS (Week 1)
+3. ✅ Semantic Analysis Phase - COMPLETE
+4. Intermediate Code Generator (Week 2)
+5. Optimization Engine (Week 3)
+6. Multi-Target Code Generation (Week 4-5)
 
 📅 TARGET COMPLETION: March 13, 2026
-Current Progress: 16.67% (1/6 phases complete)
+Current Progress: 50% (3/6 phases complete)
 
 🚀 Start with Lexical Analysis to see the visual compiler in action!
         """
@@ -474,6 +476,28 @@ Current Progress: 16.67% (1/6 phases complete)
             messagebox.showerror("Error", f"Failed to launch Syntax Analysis: {str(e)}")
             self.root.deiconify()
     
+    def launch_semantic_analysis(self):
+        """Launch the semantic analysis phase."""
+        print("🎯 Launching Semantic Analysis Phase...")
+        
+        try:
+            # Close main window temporarily
+            self.root.withdraw()
+            
+            # Create a new root window for semantic analysis
+            semantic_root = tk.Tk()
+            
+            # Create and run semantic analyzer
+            semantic_app = SemanticAnalysisGUI(semantic_root)
+            semantic_root.mainloop()
+            
+            # Show main window again after semantic analyzer closes
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Semantic Analysis: {str(e)}")
+            self.root.deiconify()
+    
     def launch_sequential_analysis(self):
         """Launch lexical analysis followed by syntax analysis."""
         print("🔄 Launching Sequential Analysis: Lexical → Syntax...")
@@ -504,6 +528,67 @@ Current Progress: 16.67% (1/6 phases complete)
                 messagebox.showinfo("Sequential Analysis", "✅ Both phases completed successfully!")
             else:
                 print("📍 Sequential analysis stopped after lexical phase.")
+            
+            # Show main window again
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Sequential Analysis: {str(e)}")
+            self.root.deiconify()
+
+    def launch_full_sequential_analysis(self):
+        """Launch full sequential analysis: Lexical → Syntax → Semantic."""
+        print("🔄 Launching Full Sequential Analysis: Lexical → Syntax → Semantic...")
+        
+        try:
+            # Close main window temporarily
+            self.root.withdraw()
+            
+            # Phase 1: Lexical Analysis
+            print("📍 Phase 1: Starting Lexical Analysis...")
+            lexical_app = LexicalAnalysisGUI()
+            lexical_app.run()
+            
+            # Ask user if they want to proceed to syntax analysis
+            proceed_to_syntax = messagebox.askyesno(
+                "Sequential Analysis", 
+                "✅ Lexical Analysis completed!\n\n🌳 Proceed to Syntax Analysis phase?",
+                icon='question'
+            )
+            
+            if not proceed_to_syntax:
+                print("📍 Sequential analysis stopped after lexical phase.")
+                self.root.deiconify()
+                return
+            
+            # Phase 2: Syntax Analysis
+            print("📍 Phase 2: Starting Syntax Analysis...")
+            syntax_root = tk.Tk()
+            syntax_app = SyntaxAnalysisGUI(syntax_root)
+            syntax_root.mainloop()
+            
+            # Ask user if they want to proceed to semantic analysis
+            proceed_to_semantic = messagebox.askyesno(
+                "Sequential Analysis",
+                "✅ Syntax Analysis completed!\n\n🎯 Proceed to Semantic Analysis phase?",
+                icon='question'
+            )
+            
+            if not proceed_to_semantic:
+                print("📍 Sequential analysis stopped after syntax phase.")
+                self.root.deiconify()
+                return
+            
+            # Phase 3: Semantic Analysis
+            print("📍 Phase 3: Starting Semantic Analysis...")
+            semantic_root = tk.Tk()
+            semantic_app = SemanticAnalysisGUI(semantic_root)
+            semantic_root.mainloop()
+            
+            messagebox.showinfo(
+                "Sequential Analysis",
+                "✅ All three phases completed successfully!\n\n📊 Complete compilation workflow executed!"
+            )
             
             # Show main window again
             self.root.deiconify()

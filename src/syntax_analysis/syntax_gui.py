@@ -18,6 +18,7 @@ from lexical_analysis.tokens import Token, TokenType
 from syntax_analysis.parser import Parser, ParseError
 from syntax_analysis.ast_nodes import ASTNode, ProgramNode
 from syntax_analysis.ast_printer import ASTPrinter  # We'll create this next
+from semantic_analysis import SemanticAnalysisGUI
 
 
 class SyntaxAnalysisGUI:
@@ -276,6 +277,13 @@ class SyntaxAnalysisGUI:
             text="🔄 Reset",
             command=self._reset_analysis
         ).pack(side='left', padx=5)
+        
+        # Semantic Analysis Transition Button
+        ttk.Button(
+            left_controls,
+            text="🎯 Proceed to Semantic Analysis",
+            command=self.launch_semantic_analysis
+        ).pack(side='left', padx=15)
         
         # Mode controls
         mode_frame = ttk.LabelFrame(left_controls, text="Mode", padding=5)
@@ -969,6 +977,52 @@ show total;'''
                 self.notebook.select(0)  # Switch to editor tab
             except ValueError:
                 pass
+    
+    def launch_semantic_analysis(self):
+        """Launch semantic analysis with current AST."""
+        if not self.current_ast:
+            messagebox.showwarning(
+                "Semantic Analysis",
+                "Please complete syntax analysis first!"
+            )
+            return
+        
+        errors = self.parser.get_errors() if hasattr(self.parser, 'get_errors') else (self.parser.errors if hasattr(self.parser, 'errors') else [])
+        
+        if errors:
+            proceed = messagebox.askyesno(
+                "Syntax Errors Detected",
+                f"Found {len(errors)} syntax errors.\n\nProceed to semantic analysis anyway?\n\nNote: Semantic analysis may fail with syntax errors."
+            )
+            if not proceed:
+                return
+        
+        # Show transition message
+        messagebox.showinfo(
+            "🎯 Semantic Analysis",
+            f"✅ Syntax Analysis Results:\n\n🌳 AST generated successfully\n⚠️ {len(errors)} syntax errors\n\n🚀 Launching Semantic Analysis Phase...\n\nAST will be passed to semantic analysis for type checking and scope validation."
+        )
+        
+        try:
+            # Close syntax analysis window
+            self.root.withdraw()
+            
+            # Create new window for semantic analysis
+            semantic_root = tk.Tk()
+            semantic_app = SemanticAnalysisGUI(semantic_root)
+            
+            # Pass AST to semantic analysis
+            semantic_app.load_ast_from_syntax(self.current_ast, errors)
+            
+            # Run semantic analysis
+            semantic_root.mainloop()
+            
+            # Show syntax analysis again after semantic analysis closes
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Semantic Analysis: {str(e)}")
+            self.root.deiconify()
 
 
 # Main function to run the syntax analysis GUI
