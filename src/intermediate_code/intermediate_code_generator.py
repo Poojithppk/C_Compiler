@@ -242,6 +242,37 @@ class IntermediateCodeGenerator:
             self.tac_code.errors.append(error_msg)
             return None
     
+    def _visit_AssignmentExpressionNode(self, node) -> Optional[str]:
+        """Visit assignment expression."""
+        try:
+            target_name = None
+            if hasattr(node, 'name'):
+                target_name = node.name
+            
+            if not target_name:
+                self.tac_code.warnings.append("Assignment expression with unknown target")
+                return None
+            
+            # Generate code for value expression
+            value_result = self._visit(node.value) if hasattr(node, 'value') else None
+            
+            # Generate assignment instruction
+            instr = TACInstruction(
+                instruction_type=InstructionType.ASSIGN,
+                result=Operand(OperandType.VARIABLE, target_name),
+                arg1=Operand(OperandType.VARIABLE, value_result) if value_result else None
+            )
+            self.tac_code.add_instruction(instr)
+            
+            self._record_step("Assignment Expression", f"{target_name} = {value_result}")
+            
+            return target_name
+            
+        except Exception as e:
+            error_msg = f"Error in assignment expression: {str(e)}"
+            self.tac_code.errors.append(error_msg)
+            return None
+    
     def _visit_BinaryOpNode(self, node) -> Optional[str]:
         """Visit binary operation."""
         try:
@@ -377,6 +408,22 @@ class IntermediateCodeGenerator:
         except Exception as e:
             error_msg = f"Error in print statement: {str(e)}"
             self.tac_code.errors.append(error_msg)
+    
+    def _visit_ExpressionStatementNode(self, node) -> Optional[str]:
+        """Visit expression statement."""
+        try:
+            # Simply visit the expression inside
+            if hasattr(node, 'expression') and node.expression:
+                result = self._visit(node.expression)
+                self._record_step("Expression Statement", f"Expression: {result}")
+                return result
+            
+            return None
+            
+        except Exception as e:
+            error_msg = f"Error in expression statement: {str(e)}"
+            self.tac_code.errors.append(error_msg)
+            return None
     
     def _visit_IfStatementNode(self, node) -> None:
         """Visit if-else statement with proper control flow."""

@@ -88,19 +88,33 @@ class TACInstruction:
         """String representation of the instruction."""
         parts = []
         
-        if self.label:
-            parts.append(f"{self.label}:")
+        # Special handling for LABEL instructions
+        if self.instruction_type == InstructionType.LABEL:
+            return f"{self.label}:"
         
+        # Build instruction name and arguments
         parts.append(self.instruction_type.value)
         
-        if self.result:
-            parts.append(f"t={self.result}")
-        
-        if self.arg1:
-            parts.append(f"a1={self.arg1}")
-        
-        if self.arg2:
-            parts.append(f"a2={self.arg2}")
+        # For JUMP instructions, the label is the operand
+        if self.instruction_type in (InstructionType.JUMP, 
+                                     InstructionType.JUMP_IF_TRUE, 
+                                     InstructionType.JUMP_IF_FALSE):
+            if self.label:
+                parts.append(self.label)
+            if self.arg1:
+                parts.append(f"a1={self.arg1}")
+            if self.arg2:
+                parts.append(f"a2={self.arg2}")
+        else:
+            # Standard format for other instructions
+            if self.result:
+                parts.append(f"t={self.result}")
+            
+            if self.arg1:
+                parts.append(f"a1={self.arg1}")
+            
+            if self.arg2:
+                parts.append(f"a2={self.arg2}")
         
         return " ".join(parts)
     

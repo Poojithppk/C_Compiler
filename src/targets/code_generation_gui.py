@@ -374,6 +374,50 @@ show total;
         finally:
             self.is_generating = False
     
+    def _detect_loop_ranges(self, instructions):
+        """
+        Detect loop ranges by finding backward jumps.
+        Returns a list of (loop_start_label, loop_end_label, loop_start_idx, loop_end_idx) tuples.
+        """
+        from intermediate_code.intermediate_symbols import InstructionType
+        
+        labels_map = {}
+        # Build labels map first
+        for i, instr in enumerate(instructions):
+            if instr.instruction_type == InstructionType.LABEL and instr.label:
+                labels_map[instr.label] = i
+        
+        loop_ranges = []
+        # Find all backward jumps (loops)
+        for i, instr in enumerate(instructions):
+            if instr.instruction_type == InstructionType.JUMP and instr.label:
+                target_idx = labels_map.get(instr.label, -1)
+                if target_idx >= 0 and target_idx < i:  # Backward jump - this is a loop!
+                    # Find the loop start label
+                    loop_start_label = instr.label
+                    # Find the loop end label (the label after the jump, if any)
+                    loop_end_label = None
+                    for j in range(i + 1, len(instructions)):
+                        if instructions[j].instruction_type == InstructionType.LABEL:
+                            loop_end_label = instructions[j].label
+                            break
+                    loop_ranges.append({
+                        'start_label': loop_start_label,
+                        'end_label': loop_end_label,
+                        'start_idx': target_idx,
+                        'jump_idx': i,
+                        'end_idx': len(instructions) if loop_end_label is None else labels_map.get(loop_end_label, len(instructions))
+                    })
+        
+        return loop_ranges
+    
+    def _is_loop_condition(self, cmp_idx, instructions, loop_ranges):
+        """Check if a CMP instruction is part of a loop condition."""
+        for loop_info in loop_ranges:
+            if cmp_idx >= loop_info['start_idx'] and cmp_idx <= loop_info['jump_idx']:
+                return True, loop_info
+        return False, None
+    
     def _generate_python_code(self) -> str:
         """Generate Python code from TAC with nested if-elif-else support."""
         if not self.tac_code or not hasattr(self.tac_code, 'instructions'):
@@ -393,8 +437,11 @@ show total;
             if instr.instruction_type == InstructionType.LABEL and instr.label:
                 labels_map[instr.label] = i
         
+        # Detect loops
+        loop_ranges = self._detect_loop_ranges(instructions)
+        
         # Generate code
-        python_code += self._generate_python_block(instructions, labels_map, 0, len(instructions), indent_level=1)
+        python_code += self._generate_python_block(instructions, labels_map, 0, len(instructions), indent_level=1, loop_ranges=loop_ranges)
         
         python_code += '    return 0\n\n'
         python_code += 'if __name__ == "__main__":\n'
@@ -402,9 +449,12 @@ show total;
         
         return python_code
     
-    def _generate_python_block(self, instructions, labels_map, start_idx, end_idx, indent_level=1, is_elif=False):
-        """Recursively generate Python code with nested if-elif-else support."""
+    def _generate_python_block(self, instructions, labels_map, start_idx, end_idx, indent_level=1, is_elif=False, loop_ranges=None):
+        """Recursively generate Python code with while loop and if-elif-else support."""
         from intermediate_code.intermediate_symbols import InstructionType, OperandType
+        
+        if loop_ranges is None:
+            loop_ranges = []
         
         python_code = ''
         i = start_idx
@@ -418,7 +468,39 @@ show total;
                 i += 1
                 continue
             
-            # Handle if-elif-else: CMP followed by JUMP_IF_FALSE
+            # Handle while loops: CMP followed by JUMP_IF_FALSE followed by JUMP back
+            is_loop, loop_info = self._is_loop_condition(i, instructions, loop_ranges) if loop_ranges else (False, None)
+            
+            if (is_loop and instr.instruction_type == InstructionType.CMP and 
+                i + 1 < len(instructions) and 
+                instructions[i + 1].instruction_type == InstructionType.JUMP_IF_FALSE):
+                
+                # Extract comparison
+                arg1 = str(instr.arg1) if instr.arg1 else "0"
+                arg2 = str(instr.arg2) if instr.arg2 else "0"
+                condition = f"{arg1} > {arg2}"
+                
+                python_code += f'{indent_str}while {condition}:\n'
+                i += 2  # Skip CMP and JUMP_IF_FALSE
+                
+                # Collect loop body instructions (until JUMP back)
+                loop_body_end = i
+                while loop_body_end < len(instructions):
+                    if (instructions[loop_body_end].instruction_type == InstructionType.JUMP and
+                        instructions[loop_body_end].label in [loop_info['start_label']]):
+                        break
+                    loop_body_end += 1
+                
+                python_code += self._generate_python_block(instructions, labels_map, i, loop_body_end, indent_level + 1, loop_ranges=loop_ranges)
+                i = loop_body_end
+                
+                # Skip the JUMP back to loop start
+                if i < len(instructions) and instructions[i].instruction_type == InstructionType.JUMP:
+                    i += 1
+                
+                continue
+            
+            # Handle if-elif-else: CMP followed by JUMP_IF_FALSE (NOT part of a loop)
             if (instr.instruction_type == InstructionType.CMP and 
                 i + 1 < len(instructions) and 
                 instructions[i + 1].instruction_type == InstructionType.JUMP_IF_FALSE):
@@ -442,7 +524,7 @@ show total;
                         break
                     if_block_end += 1
                 
-                python_code += self._generate_python_block(instructions, labels_map, i, if_block_end, indent_level + 1)
+                python_code += self._generate_python_block(instructions, labels_map, i, if_block_end, indent_level + 1, loop_ranges=loop_ranges)
                 i = if_block_end
                 
                 # Skip the JUMP
@@ -470,7 +552,7 @@ show total;
                         
                         if next_cmp_idx is not None:
                             # This is a nested elif - generate it recursively at SAME indent level but mark as elif
-                            python_code += self._generate_python_block(instructions, labels_map, next_cmp_idx, end_idx, indent_level, is_elif=True)
+                            python_code += self._generate_python_block(instructions, labels_map, next_cmp_idx, end_idx, indent_level, is_elif=True, loop_ranges=loop_ranges)
                             return python_code
                         else:
                             # This is a regular else block with statements
@@ -485,7 +567,7 @@ show total;
                                 else_block_end += 1
                             
                             # Else block content should be indented one more level
-                            python_code += self._generate_python_block(instructions, labels_map, i, else_block_end, indent_level + 1)
+                            python_code += self._generate_python_block(instructions, labels_map, i, else_block_end, indent_level + 1, loop_ranges=loop_ranges)
                             i = else_block_end
                 
                 continue
@@ -567,17 +649,23 @@ show total;
             c_code += f'    int {var};\n'
         c_code += '\n'
         
+        # Detect loops
+        loop_ranges = self._detect_loop_ranges(instructions)
+        
         # Generate code
-        c_code += self._generate_c_block(instructions, labels_map, 0, len(instructions), indent_level=1)
+        c_code += self._generate_c_block(instructions, labels_map, 0, len(instructions), indent_level=1, loop_ranges=loop_ranges)
         
         c_code += '    return EXIT_SUCCESS;\n'
         c_code += '}\n'
         
         return c_code
     
-    def _generate_c_block(self, instructions, labels_map, start_idx, end_idx, indent_level=1, is_elif=False):
+    def _generate_c_block(self, instructions, labels_map, start_idx, end_idx, indent_level=1, is_elif=False, loop_ranges=None):
         """Recursively generate C code with nested if-elif-else support."""
         from intermediate_code.intermediate_symbols import InstructionType
+        
+        if loop_ranges is None:
+            loop_ranges = []
         
         c_code = ''
         i = start_idx
@@ -591,7 +679,40 @@ show total;
                 i += 1
                 continue
             
-            # Handle if-elif-else: CMP followed by JUMP_IF_FALSE
+            # Handle while loops: CMP followed by JUMP_IF_FALSE followed by JUMP back
+            is_loop, loop_info = self._is_loop_condition(i, instructions, loop_ranges) if loop_ranges else (False, None)
+            
+            if (is_loop and instr.instruction_type == InstructionType.CMP and 
+                i + 1 < len(instructions) and 
+                instructions[i + 1].instruction_type == InstructionType.JUMP_IF_FALSE):
+                
+                # Extract comparison
+                arg1 = str(instr.arg1) if instr.arg1 else "0"
+                arg2 = str(instr.arg2) if instr.arg2 else "0"
+                condition = f"{arg1} > {arg2}"
+                
+                c_code += f'{indent_str}while ({condition}) {{\n'
+                i += 2  # Skip CMP and JUMP_IF_FALSE
+                
+                # Collect loop body instructions (until JUMP back)
+                loop_body_end = i
+                while loop_body_end < len(instructions):
+                    if (instructions[loop_body_end].instruction_type == InstructionType.JUMP and
+                        instructions[loop_body_end].label in [loop_info['start_label']]):
+                        break
+                    loop_body_end += 1
+                
+                c_code += self._generate_c_block(instructions, labels_map, i, loop_body_end, indent_level + 1, loop_ranges=loop_ranges)
+                c_code += f'{indent_str}}}\n'
+                i = loop_body_end
+                
+                # Skip the JUMP back to loop start
+                if i < len(instructions) and instructions[i].instruction_type == InstructionType.JUMP:
+                    i += 1
+                
+                continue
+            
+            # Handle if-elif-else: CMP followed by JUMP_IF_FALSE (NOT part of a loop)
             if (instr.instruction_type == InstructionType.CMP and 
                 i + 1 < len(instructions) and 
                 instructions[i + 1].instruction_type == InstructionType.JUMP_IF_FALSE):
@@ -616,7 +737,7 @@ show total;
                         break
                     if_block_end += 1
                 
-                c_code += self._generate_c_block(instructions, labels_map, i, if_block_end, indent_level + 1)
+                c_code += self._generate_c_block(instructions, labels_map, i, if_block_end, indent_level + 1, loop_ranges=loop_ranges)
                 c_code += f'{indent_str}}}\n'
                 i = if_block_end
                 
@@ -644,7 +765,7 @@ show total;
                         
                         if next_cmp_idx is not None:
                             # This is a nested elif - generate it recursively
-                            c_code += self._generate_c_block(instructions, labels_map, next_cmp_idx, end_idx, indent_level, is_elif=True)
+                            c_code += self._generate_c_block(instructions, labels_map, next_cmp_idx, end_idx, indent_level, is_elif=True, loop_ranges=loop_ranges)
                             return c_code
                         else:
                             # This is a regular else block with statements
@@ -657,7 +778,7 @@ show total;
                                     break
                                 else_block_end += 1
                             
-                            c_code += self._generate_c_block(instructions, labels_map, i, else_block_end, indent_level + 1)
+                            c_code += self._generate_c_block(instructions, labels_map, i, else_block_end, indent_level + 1, loop_ranges=loop_ranges)
                             c_code += f'{indent_str}}}\n'
                             i = else_block_end
                 
