@@ -123,6 +123,8 @@ class IfStatementNode(ASTNode):
     condition: ASTNode
     then_branch: ASTNode
     else_branch: Optional[ASTNode]
+    line: int = 0
+    column: int = 0
     
     def accept(self, visitor) -> Any:
         return visitor.visit_if_statement(self)
@@ -133,6 +135,8 @@ class WhileStatementNode(ASTNode):
     """While loop: repeat (condition) { ... }"""
     condition: ASTNode
     body: ASTNode
+    line: int = 0
+    column: int = 0
     
     def accept(self, visitor) -> Any:
         return visitor.visit_while_statement(self)
@@ -145,6 +149,8 @@ class ForStatementNode(ASTNode):
     condition: Optional[ASTNode]
     increment: Optional[ASTNode]
     body: ASTNode
+    line: int = 0
+    column: int = 0
     
     def accept(self, visitor) -> Any:
         return visitor.visit_for_statement(self)
@@ -153,6 +159,8 @@ class ForStatementNode(ASTNode):
 @dataclass
 class BreakStatementNode(ASTNode):
     """Break statement: stop;"""
+    line: int = 0
+    column: int = 0
     
     def accept(self, visitor) -> Any:
         return visitor.visit_break_statement(self)
@@ -161,6 +169,8 @@ class BreakStatementNode(ASTNode):
 @dataclass
 class ContinueStatementNode(ASTNode):
     """Continue statement: skip;"""
+    line: int = 0
+    column: int = 0
     
     def accept(self, visitor) -> Any:
         return visitor.visit_continue_statement(self)
@@ -228,6 +238,8 @@ class CallExpressionNode(ASTNode):
 class GroupingExpressionNode(ASTNode):
     """Grouped expression: (expression)"""
     expression: ASTNode
+    line: int = 0
+    column: int = 0
     
     def accept(self, visitor) -> Any:
         return visitor.visit_grouping_expression(self)
@@ -262,6 +274,8 @@ class LiteralNode(ASTNode):
 class SecureBlockNode(ASTNode):
     """Secure block: secure { ... }"""
     body: BlockNode
+    line: int = 0
+    column: int = 0
     
     def accept(self, visitor) -> Any:
         return visitor.visit_secure_block(self)

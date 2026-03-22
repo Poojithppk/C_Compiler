@@ -343,6 +343,180 @@ class IntermediateCodeGenerator:
             error_msg = f"Error in print statement: {str(e)}"
             self.tac_code.errors.append(error_msg)
     
+    def _visit_IfStatementNode(self, node) -> None:
+        """Visit if-else statement with proper control flow."""
+        try:
+            # Generate condition evaluation
+            if hasattr(node, 'condition') and node.condition:
+                cond_result = self._visit(node.condition)
+                
+                # Create labels for branches
+                else_label = self.tac_code.generate_label()
+                end_label = self.tac_code.generate_label()
+                
+                # Conditional jump: if NOT condition, go to else
+                instr = TACInstruction(
+                    instruction_type=InstructionType.JUMP_IF_FALSE,
+                    arg1=Operand(OperandType.VARIABLE, cond_result),
+                    label=else_label
+                )
+                self.tac_code.add_instruction(instr)
+                
+                # Then branch
+                if hasattr(node, 'then_branch') and node.then_branch:
+                    self._visit(node.then_branch)
+                
+                # Jump to end of if-else
+                instr = TACInstruction(
+                    instruction_type=InstructionType.JUMP,
+                    label=end_label
+                )
+                self.tac_code.add_instruction(instr)
+                
+                # Else label
+                instr = TACInstruction(
+                    instruction_type=InstructionType.LABEL,
+                    label=else_label
+                )
+                self.tac_code.add_instruction(instr)
+                
+                # Else branch (if exists)
+                if hasattr(node, 'else_branch') and node.else_branch:
+                    self._visit(node.else_branch)
+                
+                # End label
+                instr = TACInstruction(
+                    instruction_type=InstructionType.LABEL,
+                    label=end_label
+                )
+                self.tac_code.add_instruction(instr)
+                
+                self._record_step("If-Else", f"Conditional with {else_label} and {end_label}")
+                
+        except Exception as e:
+            error_msg = f"Error in if statement: {str(e)}"
+            self.tac_code.errors.append(error_msg)
+    
+    def _visit_WhileStatementNode(self, node) -> None:
+        """Visit while loop with proper control flow."""
+        try:
+            # Create labels
+            loop_label = self.tac_code.generate_label()
+            end_label = self.tac_code.generate_label()
+            
+            # Loop label (jump back here)
+            instr = TACInstruction(
+                instruction_type=InstructionType.LABEL,
+                label=loop_label
+            )
+            self.tac_code.add_instruction(instr)
+            
+            # Evaluate condition
+            if hasattr(node, 'condition') and node.condition:
+                cond_result = self._visit(node.condition)
+                
+                # If condition is false, jump to end
+                instr = TACInstruction(
+                    instruction_type=InstructionType.JUMP_IF_FALSE,
+                    arg1=Operand(OperandType.VARIABLE, cond_result),
+                    label=end_label
+                )
+                self.tac_code.add_instruction(instr)
+            
+            # Loop body
+            if hasattr(node, 'body') and node.body:
+                self._visit(node.body)
+            
+            # Jump back to loop label
+            instr = TACInstruction(
+                instruction_type=InstructionType.JUMP,
+                label=loop_label
+            )
+            self.tac_code.add_instruction(instr)
+            
+            # End label
+            instr = TACInstruction(
+                instruction_type=InstructionType.LABEL,
+                label=end_label
+            )
+            self.tac_code.add_instruction(instr)
+            
+            self._record_step("While Loop", f"Loop condition with {loop_label} and {end_label}")
+            
+        except Exception as e:
+            error_msg = f"Error in while loop: {str(e)}"
+            self.tac_code.errors.append(error_msg)
+    
+    def _visit_ForStatementNode(self, node) -> None:
+        """Visit for loop with proper control flow."""
+        try:
+            # Initialize loop variable
+            if hasattr(node, 'initializer') and node.initializer:
+                self._visit(node.initializer)
+            
+            # Create labels
+            loop_label = self.tac_code.generate_label()
+            end_label = self.tac_code.generate_label()
+            
+            # Loop label
+            instr = TACInstruction(
+                instruction_type=InstructionType.LABEL,
+                label=loop_label
+            )
+            self.tac_code.add_instruction(instr)
+            
+            # Condition check
+            if hasattr(node, 'condition') and node.condition:
+                cond_result = self._visit(node.condition)
+                
+                instr = TACInstruction(
+                    instruction_type=InstructionType.JUMP_IF_FALSE,
+                    arg1=Operand(OperandType.VARIABLE, cond_result),
+                    label=end_label
+                )
+                self.tac_code.add_instruction(instr)
+            
+            # Loop body
+            if hasattr(node, 'body') and node.body:
+                self._visit(node.body)
+            
+            # Increment
+            if hasattr(node, 'increment') and node.increment:
+                self._visit(node.increment)
+            
+            # Jump back
+            instr = TACInstruction(
+                instruction_type=InstructionType.JUMP,
+                label=loop_label
+            )
+            self.tac_code.add_instruction(instr)
+            
+            # End label
+            instr = TACInstruction(
+                instruction_type=InstructionType.LABEL,
+                label=end_label
+            )
+            self.tac_code.add_instruction(instr)
+            
+            self._record_step("For Loop", f"Loop with {loop_label} and {end_label}")
+            
+        except Exception as e:
+            error_msg = f"Error in for loop: {str(e)}"
+            self.tac_code.errors.append(error_msg)
+    
+    def _visit_BlockNode(self, node) -> None:
+        """Visit code block."""
+        try:
+            if hasattr(node, 'statements') and node.statements:
+                for statement in node.statements:
+                    self._visit(statement)
+                    
+            self._record_step("Block", "Code block processed")
+            
+        except Exception as e:
+            error_msg = f"Error in block: {str(e)}"
+            self.tac_code.errors.append(error_msg)
+    
     def _visit_IdentifierNode(self, node) -> Optional[str]:
         """Visit identifier."""
         try:

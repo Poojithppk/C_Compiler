@@ -375,57 +375,172 @@ show total;
             self.is_generating = False
     
     def _generate_python_code(self) -> str:
-        """Generate Python code."""
-        return '''#!/usr/bin/env python3
-"""
-Generated Python code from NEXUS compiler
-"""
-
-def main():
-    # Variable declarations and assignments
-    x = 5
-    y = 10
-    total = x + y
-    
-    # Display output
-    print(f"Total: {total}")
-    print(f"X: {x}")
-    print(f"Y: {y}")
-    
-    # Return result
-    return total
-
-if __name__ == "__main__":
-    result = main()
-    print(f"\\nProgram completed with result: {result}")
-'''
+        """Generate Python code from TAC."""
+        if not self.tac_code:
+            return "# Error: No TAC code available"
+        
+        import re
+        
+        # Extract instructions from TAC
+        if hasattr(self.tac_code, 'instructions'):
+            tac_instructions = self.tac_code.instructions
+        else:
+            return "# Error: Invalid TAC format"
+        
+        # Parse variables and instructions
+        variables = {}
+        instructions = []
+        write_vars = []
+        
+        for instr_obj in tac_instructions:
+            instr_str = str(instr_obj).strip()
+            if not instr_str:
+                continue
+            
+            # ASSIGN
+            assign_match = re.match(r'ASSIGN\s+t=(\w+)\s+a1=(\w+)', instr_str)
+            if assign_match:
+                var_name = assign_match.group(1)
+                value = assign_match.group(2)
+                variables[var_name] = (value, None)  # (source_var, computed_value)
+                instructions.append(('ASSIGN', var_name, value))
+                continue
+            
+            # ADD
+            add_match = re.match(r'ADD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if add_match:
+                result = add_match.group(1)
+                var1 = add_match.group(2)
+                var2 = add_match.group(3)
+                variables[result] = (var1, var2)
+                instructions.append(('ADD', result, var1, var2))
+                continue
+            
+            # WRITE
+            write_match = re.match(r'WRITE\s+a1=(\w+)', instr_str)
+            if write_match:
+                var_name = write_match.group(1)
+                write_vars.append(var_name)
+                instructions.append(('WRITE', var_name))
+                continue
+        
+        # Generate Python code
+        python_code = '#!/usr/bin/env python3\n'
+        python_code += '"""\nGenerated Python code from NEXUS compiler\n"""\n\n'
+        python_code += 'def main():\n'
+        
+        # Generate variable assignments
+        for instr in instructions:
+            if instr[0] == 'ASSIGN':
+                _, var_name, value = instr
+                if value[0].isdigit():
+                    python_code += f'    {var_name} = {value}\n'
+                else:
+                    python_code += f'    {var_name} = {value}\n'
+            
+            elif instr[0] == 'ADD':
+                _, result, var1, var2 = instr
+                python_code += f'    {result} = {var1} + {var2}\n'
+            
+            elif instr[0] == 'WRITE':
+                _, var_name = instr
+                python_code += f'    print(f"{var_name}: {{{var_name}}}")\n'
+        
+        python_code += '    return 0\n\n'
+        python_code += 'if __name__ == "__main__":\n'
+        python_code += '    main()\n'
+        
+        return python_code
     
     def _generate_c_code(self) -> str:
-        """Generate C code."""
-        return '''#include <stdio.h>
-#include <stdlib.h>
-
-/* Generated C code from NEXUS compiler */
-
-int main(int argc, char* argv[]) {
-    // Variable declarations
-    int x = 5;
-    int y = 10;
-    int total;
-    
-    // Assignments
-    total = x + y;
-    
-    // Output display
-    printf("Total: %d\\n", total);
-    printf("X: %d\\n", x);
-    printf("Y: %d\\n", y);
-    
-    // Return success
-    printf("\\nProgram completed with result: %d\\n", total);
-    return EXIT_SUCCESS;
-}
-'''
+        """Generate C code from TAC."""
+        if not self.tac_code:
+            return "/* Error: No TAC code available */"
+        
+        import re
+        
+        # Extract instructions from TAC
+        if hasattr(self.tac_code, 'instructions'):
+            tac_instructions = self.tac_code.instructions
+        else:
+            return "/* Error: Invalid TAC format */"
+        
+        # Parse variables and instructions
+        variables = set()
+        instructions = []
+        write_vars = []
+        
+        for instr_obj in tac_instructions:
+            instr_str = str(instr_obj).strip()
+            if not instr_str:
+                continue
+            
+            # ASSIGN
+            assign_match = re.match(r'ASSIGN\s+t=(\w+)\s+a1=(\w+)', instr_str)
+            if assign_match:
+                var_name = assign_match.group(1)
+                value = assign_match.group(2)
+                variables.add(var_name)
+                if not value[0].isdigit():
+                    variables.add(value)
+                instructions.append(('ASSIGN', var_name, value))
+                continue
+            
+            # ADD
+            add_match = re.match(r'ADD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if add_match:
+                result = add_match.group(1)
+                var1 = add_match.group(2)
+                var2 = add_match.group(3)
+                variables.add(result)
+                variables.add(var1)
+                variables.add(var2)
+                instructions.append(('ADD', result, var1, var2))
+                continue
+            
+            # WRITE
+            write_match = re.match(r'WRITE\s+a1=(\w+)', instr_str)
+            if write_match:
+                var_name = write_match.group(1)
+                write_vars.append(var_name)
+                instructions.append(('WRITE', var_name))
+                continue
+        
+        # Generate C code
+        c_code = '#include <stdio.h>\n'
+        c_code += '#include <stdlib.h>\n\n'
+        c_code += '/* Generated C code from NEXUS compiler */\n\n'
+        c_code += 'int main(int argc, char* argv[]) {\n'
+        
+        # Declare variables
+        c_code += '    /* Variable declarations */\n'
+        for var in sorted(variables):
+            if var not in write_vars or var in ['t0', 't1', 't2', 't3']:
+                c_code += f'    int {var};\n'
+        
+        c_code += '\n'
+        
+        # Generate code
+        for instr in instructions:
+            if instr[0] == 'ASSIGN':
+                _, var_name, value = instr
+                if value[0].isdigit():
+                    c_code += f'    {var_name} = {value};\n'
+                else:
+                    c_code += f'    {var_name} = {value};\n'
+            
+            elif instr[0] == 'ADD':
+                _, result, var1, var2 = instr
+                c_code += f'    {result} = {var1} + {var2};\n'
+            
+            elif instr[0] == 'WRITE':
+                _, var_name = instr
+                c_code += f'    printf("{var_name}: %d\\\\n", {var_name});\n'
+        
+        c_code += '\n    return EXIT_SUCCESS;\n'
+        c_code += '}\n'
+        
+        return c_code
     
     def _generate_java_code(self) -> str:
         """Generate Java code."""

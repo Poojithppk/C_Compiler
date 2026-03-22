@@ -78,7 +78,7 @@ class Parser:
         """Parse the entire program and return the root AST node."""
         try:
             if self.debug_mode:
-                print("🚀 Starting parser...")
+                print("[START] Parsing program...")
             
             self._record_step("parse", "Starting program parsing")
             program = self._parse_program()
@@ -87,7 +87,7 @@ class Parser:
                 self._log_errors()
             
             if self.debug_mode:
-                print(f"✅ Parsing completed with {len(self.errors)} errors")
+                print(f"[COMPLETE] Parsing completed with {len(self.errors)} errors")
             
             return program
             
@@ -312,9 +312,14 @@ class Parser:
         )
     
     def _parse_if_statement(self) -> IfStatementNode:
-        """Parse if statement: when (expr) stmt otherwise stmt"""
+        """Parse if statement with robust if-elif-else chain support.
+        
+        Syntax:
+            when (condition) statement [otherwise when (condition) statement]* [otherwise statement]
+        """
         token = self._previous()
         
+        # Parse the initial condition
         self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'when'")
         condition = self._parse_expression()
         self._consume(TokenType.RIGHT_PAREN, "Expected ')' after condition")
@@ -322,8 +327,37 @@ class Parser:
         then_branch = self._parse_statement()
         
         else_branch = None
-        if self._match(TokenType.ELSE):  # otherwise
-            else_branch = self._parse_statement()
+        
+        # Check for elif chain (otherwise when)
+        while self._check(TokenType.ELSE) and self._peek_next() and self._peek_next().token_type == TokenType.IF:
+            self._advance()  # consume 'otherwise'
+            self._advance()  # consume 'when'
+            elif_node = self._parse_if_statement()
+            
+            if else_branch is None:
+                else_branch = elif_node
+            else:
+                # Chain the elif
+                # Find the last else in the chain and replace it
+                current = else_branch
+                while hasattr(current, 'else_branch') and current.else_branch:
+                    current = current.else_branch
+                current.else_branch = elif_node
+            
+            # Return early to avoid parsing else after elif
+            return IfStatementNode(
+                condition=condition,
+                then_branch=then_branch,
+                else_branch=else_branch,
+                line=token.line,
+                column=token.column
+            )
+        
+        # Check for simple else clause
+        if self._match(TokenType.ELSE):
+            # Make sure this is not "otherwise when" (elif)
+            if not self._check(TokenType.IF):
+                else_branch = self._parse_statement()
         
         return IfStatementNode(
             condition=condition,
@@ -733,6 +767,13 @@ class Parser:
             return True
         return False
     
+    def _peek_next(self) -> Optional[Token]:
+        """Peek at the next token without advancing (0-indexed from current)."""
+        pos = self.current + 1
+        if pos < len(self.tokens):
+            return self.tokens[pos]
+        return None
+    
     def _check(self, token_type: TokenType) -> bool:
         """Check if current token is of given type."""
         if self._is_at_end():
@@ -821,17 +862,17 @@ class Parser:
     def _log_errors(self) -> None:
         """Log all parsing errors."""
         if self.debug_mode:
-            print(f"\n📊 Parsing Report:")
+            print(f"\n[REPORT] Parsing Report:")
             print(f"   • Errors: {len(self.errors)}")
             print(f"   • Warnings: {len(self.warnings)}")
             
             if self.errors:
-                print("\n❌ Errors:")
+                print("\n[ERRORS]:")
                 for error in self.errors:
                     print(f"   • {error}")
             
             if self.warnings:
-                print("\n⚠️ Warnings:")
+                print("\n[WARNINGS]:")
                 for warning in self.warnings:
                     print(f"   • {warning}")
     

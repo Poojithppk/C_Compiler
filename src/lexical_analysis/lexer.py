@@ -6,6 +6,7 @@ This module implements a comprehensive lexical analyzer with:
 2. Error recovery and suggestion system
 3. Security-aware token detection
 4. Interactive debugging capabilities
+5. Dynamic token registry for flexible token definitions
 """
 
 import re
@@ -16,6 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .tokens import Token, TokenType, KEYWORDS, OPERATORS, PUNCTUATION, LexicalError
+from .token_registry import TokenRegistry
 
 
 @dataclass
@@ -40,14 +42,23 @@ class VisualLexicalAnalyzer:
     - Error recovery with suggestions
     - Security-aware analysis
     - Interactive debugging
+    - Dynamic token registry support
     """
     
-    def __init__(self, visual_mode: bool = True, debug_mode: bool = False):
+    def __init__(self, visual_mode: bool = True, debug_mode: bool = False, 
+                 registry: Optional[TokenRegistry] = None):
         self.visual_mode = visual_mode
         self.debug_mode = debug_mode
         self.state = None
         self.visual_callback: Optional[Callable] = None
         self.error_callback: Optional[Callable] = None
+        
+        # Initialize token registry with all defaults
+        if registry is None:
+            self.registry = TokenRegistry()
+            self.registry.load_all_defaults()
+        else:
+            self.registry = registry
         
     def set_visual_callback(self, callback: Callable):
         """Set callback function for visual updates."""
@@ -78,7 +89,7 @@ class VisualLexicalAnalyzer:
             visual_mode=self.visual_mode
         )
         
-        print("🚀 Starting Lexical Analysis...")
+        print("[START] Lexical Analysis...")
         print("=" * 50)
         
         while not self._is_at_end():
@@ -92,7 +103,7 @@ class VisualLexicalAnalyzer:
                 if self.error_callback:
                     suggestion = self.error_callback(e)
                     if suggestion:
-                        print(f"✅ Applied suggestion: {suggestion}")
+                        print(f"[SUGGESTION] Applied: {suggestion}")
                 self._recover_from_error()
                 
         # Add EOF token
@@ -135,9 +146,10 @@ class VisualLexicalAnalyzer:
         elif char in '=!<>&|+-*^':
             self._scan_operator(start_pos, start_col, char)
             
-        # Single character tokens
-        elif char in PUNCTUATION:
-            self._create_token(PUNCTUATION[char], char, char, start_col)
+        # Single character tokens (punctuation using dynamic registry)
+        elif self.registry.is_punctuation(char):
+            token_type = self.registry.get_punctuation(char)
+            self._create_token(token_type, char, char, start_col)
             
         # Newlines
         elif char == '\n':
@@ -153,7 +165,7 @@ class VisualLexicalAnalyzer:
                 start_col
             )
             self.state.errors.append(error)
-            print(f"❌ {error}")
+            print(f"[ERROR] {error}")
     
     def _scan_number(self, start_pos: int, start_col: int):
         """Scan integer or floating-point number."""
@@ -184,8 +196,10 @@ class VisualLexicalAnalyzer:
             
         lexeme = self.state.source[start_pos:self.state.position]
         
-        # Check if it's a keyword
-        token_type = KEYWORDS.get(lexeme.lower(), TokenType.IDENTIFIER)
+        # Check if it's a keyword using the dynamic registry
+        token_type = self.registry.get_keyword(lexeme)
+        if token_type is None:
+            token_type = TokenType.IDENTIFIER
         
         # Handle boolean values
         if token_type == TokenType.TRUE:
@@ -245,18 +259,18 @@ class VisualLexicalAnalyzer:
         self._create_token(TokenType.COMMENT, f"//{comment_text}", comment_text, start_col)
         
     def _scan_operator(self, start_pos: int, start_col: int, first_char: str):
-        """Scan single or multi-character operators."""
-        # Check for multi-character operators
-        if self._peek():
-            two_char = first_char + self._peek()
-            if two_char in OPERATORS:
-                self._advance()  # consume second character
-                self._create_token(OPERATORS[two_char], two_char, two_char, start_col)
-                return
-                
-        # Single character operator
-        if first_char in OPERATORS:
-            self._create_token(OPERATORS[first_char], first_char, first_char, start_col)
+        """Scan single or multi-character operators using dynamic registry."""
+        # Use registry to find longest matching operator
+        # This handles both single and multi-character operators dynamically
+        match = self.registry.get_longest_operator_match(self.state.source, 
+                                                         self.state.position - 1)
+        
+        if match:
+            operator, token_type = match
+            # Consume all characters of the operator
+            for _ in range(len(operator) - 1):  # -1 because first_char already consumed
+                self._advance()
+            self._create_token(token_type, operator, operator, start_col)
         else:
             raise LexicalError(
                 f"Unknown operator: '{first_char}'", 
@@ -332,16 +346,16 @@ class VisualLexicalAnalyzer:
     def _print_summary(self):
         """Print analysis summary."""
         print("\n" + "=" * 50)
-        print("🎯 Lexical Analysis Complete!")
-        print(f"📊 Tokens found: {len(self.state.tokens)}")
-        print(f"❌ Errors: {len(self.state.errors)}")
+        print("[ANALYSIS] Lexical Analysis Complete!")
+        print(f"[INFO] Tokens found: {len(self.state.tokens)}")
+        print(f"[SUMMARY] Errors: {len(self.state.errors)}")
         
         if self.state.errors:
-            print("\n🔍 Error Details:")
+            print("\n[ERROR DETAILS]:")
             for error in self.state.errors:
                 print(f"  - {error}")
                 
-        print("\n🏷️  Token Summary:")
+        print("\n[TOKEN SUMMARY]:")
         token_counts = {}
         for token in self.state.tokens:
             token_type = token.token_type.name

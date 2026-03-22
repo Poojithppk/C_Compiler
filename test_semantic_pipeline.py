@@ -28,9 +28,9 @@ print("=" * 60)
 print("\n[1] LEXICAL ANALYSIS")
 lexer = VisualLexicalAnalyzer(visual_mode=False)
 tokens, lex_errors = lexer.analyze(code)
-print(f"✅ Tokens: {len(tokens)}")
+print(f"[INFO] Tokens analyzed: {len(tokens)}")
 if lex_errors:
-    print(f"❌ Errors: {len(lex_errors)}")
+    print(f"[ERROR] Found: {len(lex_errors)}")
     for err in lex_errors:
         print(f"   - {err}")
 
@@ -39,12 +39,12 @@ print("\n[2] SYNTAX ANALYSIS")
 try:
     parser = Parser(tokens)
     ast = parser.parse()
-    print(f"✅ AST Generated")
+    print(f"[SUCCESS] AST Generated")
     print(f"   Program node type: {type(ast).__name__}")
     if hasattr(ast, 'statements'):
         print(f"   Statements: {len(ast.statements)}")
 except Exception as e:
-    print(f"❌ Syntax Error: {e}")
+    print(f"[ERROR] Syntax Error: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
@@ -54,7 +54,7 @@ print("\n[3] SEMANTIC ANALYSIS")
 try:
     analyzer = SemanticAnalyzer(visual_mode=False)
     success, errors, warnings = analyzer.analyze(ast)
-    print(f"✅ Analysis Complete")
+    print(f"[SUCCESS] Analysis Complete")
     print(f"   Success: {success}")
     print(f"   Errors: {len(errors)}")
     print(f"   Warnings: {len(warnings)}")
@@ -78,11 +78,11 @@ try:
             print(f"   - {name}: {symbol.kind} ({symbol.type_info})")
     
 except Exception as e:
-    print(f"❌ Semantic Analysis Error: {e}")
+    print(f"[ERROR] Semantic Analysis Error: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
 
 print("\n" + "=" * 60)
-print("✅ ALL PHASES COMPLETED SUCCESSFULLY")
+print("[SUCCESS] ALL PHASES COMPLETED SUCCESSFULLY")
 print("=" * 60)

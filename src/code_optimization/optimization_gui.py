@@ -396,63 +396,115 @@ show a;
             self.is_analyzing = False
     
     def _apply_optimizations(self, tac_code) -> str:
-        """Apply selected optimizations to TAC code."""
+        """Apply real optimizations to TAC code."""
         if not tac_code:
             return "No intermediate code to optimize"
         
-        # Get the original TAC code text
-        original_tac_text = self._format_tac_code(tac_code)
-        
-        # Extract instruction lines more robustly
-        original_instructions = []
-        
-        # Split by known instruction patterns with more specific matching
-        import re
-        # Match individual instructions: KEYWORD followed by operands
-        # Each instruction is like: ASSIGN t=num1 a1=5 or ADD t=t0 a1=num1 a2=num2
-        pattern = r'((?:ASSIGN|ADD|SUB|MUL|DIV|WRITE|READ|IF|LABEL|JUMP|MOD|JAL|JUMP_IF_ZERO|JUMP_IF_NOT_ZERO)\s+[a-zA-Z_0-9=\s]*(?:[a-zA-Z_0-9=]+)?)'
-        
-        # Try to find instructions with regex
-        matches = re.findall(pattern, original_tac_text)
-        
-        if matches and len(matches) > 1:
-            original_instructions = [m.strip() for m in matches if m.strip()]
+        # Extract instructions from TAC object
+        if hasattr(tac_code, 'instructions'):
+            original_instructions_obj = tac_code.instructions
         else:
-            # Alternative: split by common delimiters if regex fails
-            # Look for patterns like "ASSIGN ..., ASSIGN ..." or similar
-            text = original_tac_text
-            # Try splitting by comma if instructions are comma-separated
-            if ',' in text:
-                for part in text.split(','):
-                    part = part.strip()
-                    if any(x in part for x in ['ASSIGN', 'ADD', 'SUB', 'MUL', 'DIV', 'WRITE', 'READ']):
-                        original_instructions.append(part)
-            
-            # If still no results, try line-by-line parsing
-            if not original_instructions:
-                all_lines = original_tac_text.split('\n')
-                for line in all_lines:
-                    line = line.strip()
-                    if line and not line.startswith('=') and not line.startswith('-') and any(x in line for x in ['ASSIGN', 'ADD', 'SUB', 'MUL', 'DIV', 'WRITE', 'READ']):
-                        original_instructions.append(line)
+            return "Error: Invalid TAC format"
+        
+        # Convert to strings for processing
+        original_instructions = [str(i).strip() for i in original_instructions_obj]
         
         # Get list of active optimizations
         active_optimizations = []
-        if self.optimizations['dead_code'].get():
+        apply_dead_code = self.optimizations['dead_code'].get()
+        apply_const_fold = self.optimizations['constant_folding'].get()
+        apply_cse = self.optimizations['common_subexpr'].get()
+        
+        if apply_dead_code:
             active_optimizations.append("Dead Code Elimination")
-        if self.optimizations['constant_folding'].get():
+        if apply_const_fold:
             active_optimizations.append("Constant Folding")
-        if self.optimizations['common_subexpr'].get():
-            active_optimizations.append("Common Subexpression Elimination")
+        if apply_cse:
+            active_optimizations.append("Common Subexpression")
         if self.optimizations['loop_unrolling'].get():
             active_optimizations.append("Loop Unrolling")
         if self.optimizations['peephole'].get():
-            active_optimizations.append("Peephole Optimization")
+            active_optimizations.append("Peephole")
         if self.optimizations['strength_reduction'].get():
             active_optimizations.append("Strength Reduction")
         
-        # For now, optimized code = original code (we don't remove instructions without proper analysis)
+        # Apply optimizations
         optimized_instructions = original_instructions.copy()
+        variables = {}  # var_name -> constant value (if applicable)
+        
+        # PASS 1: Constant Folding
+        if apply_const_fold:
+            folded = []
+            import re
+            for instr in optimized_instructions:
+                # Pattern: ADD t=result a1=var1 a2=var2
+                add_match = re.match(r'ADD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr)
+                if add_match:
+                    result = add_match.group(1)
+                    var1 = add_match.group(2)
+                    var2 = add_match.group(3)
+                    
+                    # If both are constants, fold them
+                    val1 = variables.get(var1, var1)
+                    val2 = variables.get(var2, var2)
+                    
+                    if isinstance(val1, int) and isinstance(val2, int):
+                        const_result = val1 + val2
+                        folded.append(f"ASSIGN t={result} a1={const_result}")
+                        variables[result] = const_result
+                    else:
+                        folded.append(instr)
+                        variables[result] = f"{var1}+{var2}"
+                    continue
+                
+                # Pattern: ASSIGN t=var a1=value
+                assign_match = re.match(r'ASSIGN\s+t=(\w+)\s+a1=(\w+)', instr)
+                if assign_match:
+                    var_name = assign_match.group(1)
+                    value = assign_match.group(2)
+                    
+                    # Track if it's a constant
+                    if value.isdigit():
+                        variables[var_name] = int(value)
+                    else:
+                        variables[var_name] = value
+                    folded.append(instr)
+                    continue
+                
+                folded.append(instr)
+            
+            optimized_instructions = folded
+        
+        # PASS 2: Dead Code Elimination (remove unused intermediate variables)
+        if apply_dead_code:
+            # Find which variables are actually used (WRITE or as operands)
+            used_vars = set()
+            import re
+            
+            for instr in optimized_instructions:
+                # Collect variables used in operations
+                operand_match = re.findall(r'a[0-9]=(\w+)', instr)
+                for var in operand_match:
+                    used_vars.add(var)
+                
+                # WRITE always uses the variable
+                write_match = re.match(r'WRITE\s+a1=(\w+)', instr)
+                if write_match:
+                    used_vars.add(write_match.group(1))
+            
+            # Remove assignments to variables that are never used
+            cleaned = []
+            for instr in optimized_instructions:
+                assign_match = re.match(r'ASSIGN\s+t=(\w+)\s+a1=', instr)
+                if assign_match:
+                    var_name = assign_match.group(1)
+                    # Keep if variable is used, or if it's needed for temporaries
+                    if var_name in used_vars or var_name.startswith('t'):
+                        cleaned.append(instr)
+                else:
+                    cleaned.append(instr)
+            
+            optimized_instructions = cleaned
         
         # Build output
         output_lines = []
@@ -461,7 +513,8 @@ show a;
         output_lines.append(f"\nActive Optimizations: {', '.join(active_optimizations) if active_optimizations else 'None selected'}\n")
         output_lines.append(f"Original Instructions: {len(original_instructions)}")
         output_lines.append(f"Optimized Instructions: {len(optimized_instructions)}")
-        output_lines.append(f"Reduction: {len(original_instructions) - len(optimized_instructions)} instructions\n")
+        reduction = len(original_instructions) - len(optimized_instructions)
+        output_lines.append(f"Reduction: {reduction} instructions ({round(100*reduction/len(original_instructions), 1)}%)\n")
         output_lines.append("OPTIMIZED INSTRUCTIONS:")
         output_lines.append("-" * 60)
         
