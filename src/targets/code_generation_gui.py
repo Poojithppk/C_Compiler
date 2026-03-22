@@ -375,7 +375,7 @@ show total;
             self.is_generating = False
     
     def _generate_python_code(self) -> str:
-        """Generate Python code from TAC with control flow support."""
+        """Generate Python code from TAC with nested if-elif-else support."""
         if not self.tac_code or not hasattr(self.tac_code, 'instructions'):
             return "# Error: No TAC code available"
         
@@ -386,7 +386,7 @@ show total;
         python_code += 'def main():\n'
         
         instructions = self.tac_code.instructions
-        labels_map = {}  # Map label names to instruction indices
+        labels_map = {}
         
         # First pass: find all labels
         for i, instr in enumerate(instructions):
@@ -394,19 +394,31 @@ show total;
                 labels_map[instr.label] = i
         
         # Generate code
-        i = 0
-        indent_level = 1
+        python_code += self._generate_python_block(instructions, labels_map, 0, len(instructions), indent_level=1)
         
-        while i < len(instructions):
+        python_code += '    return 0\n\n'
+        python_code += 'if __name__ == "__main__":\n'
+        python_code += '    main()\n'
+        
+        return python_code
+    
+    def _generate_python_block(self, instructions, labels_map, start_idx, end_idx, indent_level=1, is_elif=False):
+        """Recursively generate Python code with nested if-elif-else support."""
+        from intermediate_code.intermediate_symbols import InstructionType, OperandType
+        
+        python_code = ''
+        i = start_idx
+        
+        while i < end_idx:
             instr = instructions[i]
             indent_str = '    ' * indent_level
             
-            # Skip labels
+            # Skip labels at block start
             if instr.instruction_type == InstructionType.LABEL:
                 i += 1
                 continue
             
-            # Handle if-else: CMP followed by JUMP_IF_FALSE
+            # Handle if-elif-else: CMP followed by JUMP_IF_FALSE
             if (instr.instruction_type == InstructionType.CMP and 
                 i + 1 < len(instructions) and 
                 instructions[i + 1].instruction_type == InstructionType.JUMP_IF_FALSE):
@@ -417,87 +429,65 @@ show total;
                 condition = f"{arg1} > {arg2}"
                 
                 false_label = instructions[i + 1].label
-                false_label_idx = labels_map.get(false_label, len(instructions))
                 
-                python_code += f'{indent_str}if {condition}:\n'
-                indent_level += 1
-                if_indent_str = '    ' * indent_level
+                # Use elif if is_elif, else use if - both at same indentation (indent_str)
+                prefix = 'elif' if is_elif else 'if'
+                python_code += f'{indent_str}{prefix} {condition}:\n'
                 i += 2
                 
-                # Collect if-block instructions (until JUMP or false_label)
-                while i < len(instructions):
-                    if instructions[i].instruction_type == InstructionType.LABEL:
-                        # We've hit a label - if it's the false label, go to else
-                        if instructions[i].label == false_label:
-                            break
-                        i += 1
-                        continue
-                    
-                    if instructions[i].instruction_type == InstructionType.JUMP:
-                        # Skip JUMP to else block
-                        i += 1
-                        continue
-                    
-                    # Generate if-block instruction
-                    if instructions[i].instruction_type == InstructionType.WRITE:
-                        if instructions[i].arg1:
-                            value = str(instructions[i].arg1)
-                            if hasattr(instructions[i].arg1, 'type') and instructions[i].arg1.type == OperandType.CONSTANT:
-                                python_code += f'{if_indent_str}print("{value}")\n'
-                            else:
-                                python_code += f'{if_indent_str}print(f"Result: {{{value}}}")\n'
-                    elif instructions[i].instruction_type == InstructionType.ASSIGN:
-                        if instructions[i].result and instructions[i].arg1:
-                            python_code += f'{if_indent_str}{instructions[i].result} = {instructions[i].arg1}\n'
-                    elif instructions[i].instruction_type not in [InstructionType.LABEL]:
-                        # Handle other arithmetic operations
-                        if instructions[i].instruction_type == InstructionType.ADD:
-                            if instructions[i].result and instructions[i].arg1 and instructions[i].arg2:
-                                python_code += f'{if_indent_str}{instructions[i].result} = {instructions[i].arg1} + {instructions[i].arg2}\n'
-                        elif instructions[i].instruction_type == InstructionType.SUB:
-                            if instructions[i].result and instructions[i].arg1 and instructions[i].arg2:
-                                python_code += f'{if_indent_str}{instructions[i].result} = {instructions[i].arg1} - {instructions[i].arg2}\n'
-                    
+                # Collect if-block instructions (until JUMP)
+                if_block_end = i
+                while if_block_end < len(instructions):
+                    if instructions[if_block_end].instruction_type == InstructionType.JUMP:
+                        break
+                    if_block_end += 1
+                
+                python_code += self._generate_python_block(instructions, labels_map, i, if_block_end, indent_level + 1)
+                i = if_block_end
+                
+                # Skip the JUMP
+                if i < len(instructions) and instructions[i].instruction_type == InstructionType.JUMP:
                     i += 1
                 
-                # Now handle else block if false_label exists
-                if i < len(instructions) and instructions[i].instruction_type == InstructionType.LABEL and instructions[i].label == false_label:
-                    python_code += f'    ' * (indent_level - 1) + 'else:\n'
-                    else_indent_str = '    ' * indent_level
-                    i += 1
-                    
-                    # Collect else-block instructions (until end label or end of instructions)
-                    while i < len(instructions):
-                        if instructions[i].instruction_type == InstructionType.LABEL:
-                            # End of else block
-                            break
-                        if instructions[i].instruction_type == InstructionType.JUMP:
-                            i += 1
-                            continue
-                        
-                        # Generate else-block instruction
-                        if instructions[i].instruction_type == InstructionType.WRITE:
-                            if instructions[i].arg1:
-                                value = str(instructions[i].arg1)
-                                if hasattr(instructions[i].arg1, 'type') and instructions[i].arg1.type == OperandType.CONSTANT:
-                                    python_code += f'{else_indent_str}print("{value}")\n'
-                                else:
-                                    python_code += f'{else_indent_str}print(f"Result: {{{value}}}")\n'
-                        elif instructions[i].instruction_type == InstructionType.ASSIGN:
-                            if instructions[i].result and instructions[i].arg1:
-                                python_code += f'{else_indent_str}{instructions[i].result} = {instructions[i].arg1}\n'
-                        elif instructions[i].instruction_type not in [InstructionType.LABEL]:
-                            # Handle other operations
-                            if instructions[i].instruction_type == InstructionType.ADD:
-                                if instructions[i].result and instructions[i].arg1 and instructions[i].arg2:
-                                    python_code += f'{else_indent_str}{instructions[i].result} = {instructions[i].arg1} + {instructions[i].arg2}\n'
-                            elif instructions[i].instruction_type == InstructionType.SUB:
-                                if instructions[i].result and instructions[i].arg1 and instructions[i].arg2:
-                                    python_code += f'{else_indent_str}{instructions[i].result} = {instructions[i].arg1} - {instructions[i].arg2}\n'
-                        
+                # Now check for false_label - look for nested condition or else block
+                false_label_idx = labels_map.get(false_label, len(instructions))
+                if false_label_idx < len(instructions):
+                    # Skip to false_label
+                    while i < len(instructions) and (instructions[i].instruction_type == InstructionType.LABEL and instructions[i].label != false_label):
                         i += 1
+                    
+                    if i < len(instructions) and instructions[i].instruction_type == InstructionType.LABEL and instructions[i].label == false_label:
+                        i += 1
+                        
+                        # Check if next non-LABEL instruction is CMP (nested elif)
+                        next_cmp_idx = None
+                        for j in range(i, min(i + 5, len(instructions))):
+                            if instructions[j].instruction_type == InstructionType.CMP:
+                                next_cmp_idx = j
+                                break
+                            elif instructions[j].instruction_type not in [InstructionType.LABEL]:
+                                break
+                        
+                        if next_cmp_idx is not None:
+                            # This is a nested elif - generate it recursively at SAME indent level but mark as elif
+                            python_code += self._generate_python_block(instructions, labels_map, next_cmp_idx, end_idx, indent_level, is_elif=True)
+                            return python_code
+                        else:
+                            # This is a regular else block with statements
+                            else_indent = '    ' * indent_level
+                            python_code += f'{else_indent}else:\n'
+                            
+                            # Find the end of the else block (next label at same or higher level)
+                            else_block_end = i
+                            while else_block_end < len(instructions):
+                                if instructions[else_block_end].instruction_type == InstructionType.LABEL:
+                                    break
+                                else_block_end += 1
+                            
+                            # Else block content should be indented one more level
+                            python_code += self._generate_python_block(instructions, labels_map, i, else_block_end, indent_level + 1)
+                            i = else_block_end
                 
-                indent_level -= 1
                 continue
             
             # Handle regular straight-line instructions
@@ -508,7 +498,7 @@ show total;
             elif instr.instruction_type == InstructionType.WRITE:
                 if instr.arg1:
                     value = str(instr.arg1)
-                    if instr.arg1.type == OperandType.CONSTANT:
+                    if hasattr(instr.arg1, 'type') and instr.arg1.type == OperandType.CONSTANT:
                         python_code += f'{indent_str}print("{value}")\n'
                     else:
                         python_code += f'{indent_str}print(f"Result: {{{value}}}")\n'
@@ -535,161 +525,183 @@ show total;
             
             i += 1
         
-        python_code += '    return 0\n\n'
-        python_code += 'if __name__ == "__main__":\n'
-        python_code += '    main()\n'
-        
         return python_code
 
     
     def _generate_c_code(self) -> str:
-        """Generate C code from TAC."""
-        if not self.tac_code:
+        """Generate C code from TAC with nested if-elif-else support."""
+        if not self.tac_code or not hasattr(self.tac_code, 'instructions'):
             return "/* Error: No TAC code available */"
         
-        import re
+        from intermediate_code.intermediate_symbols import InstructionType
         
-        # Extract instructions from TAC
-        if hasattr(self.tac_code, 'instructions'):
-            tac_instructions = self.tac_code.instructions
-        else:
-            return "/* Error: Invalid TAC format */"
-        
-        # Parse variables and instructions
-        variables = set()
-        instructions = []
-        write_vars = []
-        
-        for instr_obj in tac_instructions:
-            instr_str = str(instr_obj).strip()
-            if not instr_str:
-                continue
-            
-            # ASSIGN
-            assign_match = re.match(r'ASSIGN\s+t=(\w+)\s+a1=(\w+)', instr_str)
-            if assign_match:
-                var_name = assign_match.group(1)
-                value = assign_match.group(2)
-                variables.add(var_name)
-                if not value[0].isdigit():
-                    variables.add(value)
-                instructions.append(('ASSIGN', var_name, value))
-                continue
-            
-            # ADD
-            add_match = re.match(r'ADD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if add_match:
-                result = add_match.group(1)
-                var1 = add_match.group(2)
-                var2 = add_match.group(3)
-                variables.add(result)
-                variables.add(var1)
-                variables.add(var2)
-                instructions.append(('ADD', result, var1, var2))
-                continue
-            
-            # SUB
-            sub_match = re.match(r'SUB\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if sub_match:
-                result = sub_match.group(1)
-                var1 = sub_match.group(2)
-                var2 = sub_match.group(3)
-                variables.add(result)
-                variables.add(var1)
-                variables.add(var2)
-                instructions.append(('SUB', result, var1, var2))
-                continue
-            
-            # MUL
-            mul_match = re.match(r'MUL\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if mul_match:
-                result = mul_match.group(1)
-                var1 = mul_match.group(2)
-                var2 = mul_match.group(3)
-                variables.add(result)
-                variables.add(var1)
-                variables.add(var2)
-                instructions.append(('MUL', result, var1, var2))
-                continue
-            
-            # DIV
-            div_match = re.match(r'DIV\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if div_match:
-                result = div_match.group(1)
-                var1 = div_match.group(2)
-                var2 = div_match.group(3)
-                variables.add(result)
-                variables.add(var1)
-                variables.add(var2)
-                instructions.append(('DIV', result, var1, var2))
-                continue
-            
-            # MOD
-            mod_match = re.match(r'MOD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if mod_match:
-                result = mod_match.group(1)
-                var1 = mod_match.group(2)
-                var2 = mod_match.group(3)
-                variables.add(result)
-                variables.add(var1)
-                variables.add(var2)
-                instructions.append(('MOD', result, var1, var2))
-                continue
-            
-            # WRITE
-            write_match = re.match(r'WRITE\s+a1=(\w+)', instr_str)
-            if write_match:
-                var_name = write_match.group(1)
-                write_vars.append(var_name)
-                instructions.append(('WRITE', var_name))
-                continue
-        
-        # Generate C code
         c_code = '#include <stdio.h>\n'
         c_code += '#include <stdlib.h>\n\n'
         c_code += '/* Generated C code from NEXUS compiler */\n\n'
         c_code += 'int main(int argc, char* argv[]) {\n'
         
+        instructions = self.tac_code.instructions
+        labels_map = {}  # Map label names to instruction indices
+        
+        # First pass: find all labels and real variables (not string messages)
+        variables = set()
+        for i, instr in enumerate(instructions):
+            if instr.instruction_type == InstructionType.LABEL and instr.label:
+                labels_map[instr.label] = i
+            
+            # Collect variable names - exclude string values with spaces
+            if instr.result:
+                variables.add(str(instr.result))
+            if instr.arg1 and instr.instruction_type != InstructionType.WRITE:
+                arg = str(instr.arg1)
+                if not arg.replace('-', '').isdigit() and ' ' not in arg:
+                    variables.add(arg)
+            if instr.arg2:
+                arg = str(instr.arg2)
+                if not arg.replace('-', '').isdigit() and ' ' not in arg:
+                    variables.add(arg)
+        
         # Declare variables
         c_code += '    /* Variable declarations */\n'
         for var in sorted(variables):
-            if var not in write_vars or var in ['t0', 't1', 't2', 't3']:
-                c_code += f'    int {var};\n'
-        
+            c_code += f'    int {var};\n'
         c_code += '\n'
         
         # Generate code
-        for instr in instructions:
-            if instr[0] == 'ASSIGN':
-                _, var_name, value = instr
-                c_code += f'    {var_name} = {value};\n'
-            
-            elif instr[0] == 'ADD':
-                _, result, var1, var2 = instr
-                c_code += f'    {result} = {var1} + {var2};\n'
-            
-            elif instr[0] == 'SUB':
-                _, result, var1, var2 = instr
-                c_code += f'    {result} = {var1} - {var2};\n'
-            
-            elif instr[0] == 'MUL':
-                _, result, var1, var2 = instr
-                c_code += f'    {result} = {var1} * {var2};\n'
-            
-            elif instr[0] == 'DIV':
-                _, result, var1, var2 = instr
-                c_code += f'    {result} = {var1} / {var2};\n'
-            
-            elif instr[0] == 'MOD':
-                _, result, var1, var2 = instr
-                c_code += f'    {result} = {var1} % {var2};\n'
-            
-            elif instr[0] == 'WRITE':
-                _, var_name = instr
-                c_code += f'    printf("expr: %d\\n", {var_name});\n'
+        c_code += self._generate_c_block(instructions, labels_map, 0, len(instructions), indent_level=1)
         
-        c_code += '\n    return EXIT_SUCCESS;\n'
+        c_code += '    return EXIT_SUCCESS;\n'
         c_code += '}\n'
+        
+        return c_code
+    
+    def _generate_c_block(self, instructions, labels_map, start_idx, end_idx, indent_level=1, is_elif=False):
+        """Recursively generate C code with nested if-elif-else support."""
+        from intermediate_code.intermediate_symbols import InstructionType
+        
+        c_code = ''
+        i = start_idx
+        
+        while i < end_idx:
+            instr = instructions[i]
+            indent_str = '    ' * indent_level
+            
+            # Skip labels at block start
+            if instr.instruction_type == InstructionType.LABEL:
+                i += 1
+                continue
+            
+            # Handle if-elif-else: CMP followed by JUMP_IF_FALSE
+            if (instr.instruction_type == InstructionType.CMP and 
+                i + 1 < len(instructions) and 
+                instructions[i + 1].instruction_type == InstructionType.JUMP_IF_FALSE):
+                
+                # Extract comparison
+                arg1 = str(instr.arg1) if instr.arg1 else "0"
+                arg2 = str(instr.arg2) if instr.arg2 else "0"
+                condition = f"{arg1} > {arg2}"
+                
+                false_label = instructions[i + 1].label
+                false_label_idx = labels_map.get(false_label, len(instructions))
+                
+                # Use else if for nested conditions, if for first
+                prefix = 'else if' if is_elif else 'if'
+                c_code += f'{indent_str}{prefix} ({condition}) {{\n'
+                i += 2
+                
+                # Collect if-block instructions (until JUMP)
+                if_block_end = i
+                while if_block_end < len(instructions):
+                    if instructions[if_block_end].instruction_type == InstructionType.JUMP:
+                        break
+                    if_block_end += 1
+                
+                c_code += self._generate_c_block(instructions, labels_map, i, if_block_end, indent_level + 1)
+                c_code += f'{indent_str}}}\n'
+                i = if_block_end
+                
+                # Skip the JUMP
+                if i < len(instructions) and instructions[i].instruction_type == InstructionType.JUMP:
+                    i += 1
+                
+                # Now check for false_label - look for nested condition or else block
+                if false_label_idx < len(instructions):
+                    # Skip to false_label
+                    while i < len(instructions) and instructions[i].instruction_type == InstructionType.LABEL and instructions[i].label != false_label:
+                        i += 1
+                    
+                    if i < len(instructions) and instructions[i].instruction_type == InstructionType.LABEL and instructions[i].label == false_label:
+                        i += 1
+                        
+                        # Check if next non-LABEL instruction is CMP (nested elif)
+                        next_cmp_idx = None
+                        for j in range(i, min(i + 5, len(instructions))):
+                            if instructions[j].instruction_type == InstructionType.CMP:
+                                next_cmp_idx = j
+                                break
+                            elif instructions[j].instruction_type not in [InstructionType.LABEL]:
+                                break
+                        
+                        if next_cmp_idx is not None:
+                            # This is a nested elif - generate it recursively
+                            c_code += self._generate_c_block(instructions, labels_map, next_cmp_idx, end_idx, indent_level, is_elif=True)
+                            return c_code
+                        else:
+                            # This is a regular else block with statements
+                            c_code += f'{indent_str}else {{\n'
+                            
+                            # Find the end of the else block
+                            else_block_end = i
+                            while else_block_end < len(instructions):
+                                if instructions[else_block_end].instruction_type == InstructionType.LABEL:
+                                    break
+                                else_block_end += 1
+                            
+                            c_code += self._generate_c_block(instructions, labels_map, i, else_block_end, indent_level + 1)
+                            c_code += f'{indent_str}}}\n'
+                            i = else_block_end
+                
+                continue
+            
+            # Handle regular instructions
+            if instr.instruction_type == InstructionType.ASSIGN:
+                if instr.result and instr.arg1:
+                    c_code += f'{indent_str}{instr.result} = {instr.arg1};\n'
+            
+            elif instr.instruction_type == InstructionType.WRITE:
+                if instr.arg1:
+                    value = str(instr.arg1)
+                    # Check if it's a string literal (contains spaces or is quoted)
+                    if ' ' in value or value.startswith('"'):
+                        # It's a string message
+                        if not value.startswith('"'):
+                            value = f'"{value}\\n"'
+                        c_code += f'{indent_str}printf({value});\n'
+                    else:
+                        # It's a variable
+                        c_code += f'{indent_str}printf("%d\\n", {value});\n'
+            
+            elif instr.instruction_type == InstructionType.ADD:
+                if instr.result and instr.arg1 and instr.arg2:
+                    c_code += f'{indent_str}{instr.result} = {instr.arg1} + {instr.arg2};\n'
+            
+            elif instr.instruction_type == InstructionType.SUB:
+                if instr.result and instr.arg1 and instr.arg2:
+                    c_code += f'{indent_str}{instr.result} = {instr.arg1} - {instr.arg2};\n'
+            
+            elif instr.instruction_type == InstructionType.MUL:
+                if instr.result and instr.arg1 and instr.arg2:
+                    c_code += f'{indent_str}{instr.result} = {instr.arg1} * {instr.arg2};\n'
+            
+            elif instr.instruction_type == InstructionType.DIV:
+                if instr.result and instr.arg1 and instr.arg2:
+                    c_code += f'{indent_str}{instr.result} = {instr.arg1} / {instr.arg2};\n'
+            
+            elif instr.instruction_type == InstructionType.MOD:
+                if instr.result and instr.arg1 and instr.arg2:
+                    c_code += f'{indent_str}{instr.result} = {instr.arg1} % {instr.arg2};\n'
+            
+            i += 1
         
         return c_code
 
@@ -722,154 +734,43 @@ public class Generated {
 '''
     
     def _generate_assembly_code(self) -> str:
-        """Generate Assembly code (x86-64) from TAC with proper parsing."""
+        """Generate Assembly code (x86-64) from TAC with control flow support."""
         if not self.tac_code:
             return "; Error: No TAC code available for assembly generation"
         
-        import re
+        from intermediate_code.intermediate_symbols import InstructionType
         
-        # Extract instructions directly from TAC object
-        # TACCode has .instructions attribute with actual TAC instructions
-        if hasattr(self.tac_code, 'instructions'):
-            # Use actual TACCode.instructions list
-            tac_instructions = self.tac_code.instructions
-        else:
-            # Fallback: parse string representation
-            tac_text = str(self.tac_code).strip('[]')
-            tac_instructions = [stmt.strip() for stmt in tac_text.split(',')]
+        instructions = self.tac_code.instructions
+        labels_map = {}
+        variables = {}  # Maps variable names to RSP offsets
+        var_counter = 1
+        asm_code_lines = []
         
-        print(f"\n🔍 [ASSEMBLY DEBUG] Processing {len(tac_instructions)} instructions directly from TAC")
+        # First pass: find all labels and variables
+        for i, instr in enumerate(instructions):
+            if instr.instruction_type == InstructionType.LABEL and instr.label:
+                labels_map[instr.label] = i
+            
+            # Track variables
+            for operand in [instr.result, instr.arg1, instr.arg2]:
+                if operand:
+                    var_name = str(operand)
+                    if var_name not in variables and not var_name.replace('-', '').isdigit():
+                        variables[var_name] = var_counter * 4
+                        var_counter += 1
         
-        # Track all variables in order of first appearance
-        variables = {}     # var_name -> rbp offset
-        instructions = []  # Parsed TAC instructions
-        write_vars = []    # Variables to print
-        var_counter = 1    # For offset calculation
-        
-        # Parse each TAC instruction
-        for i, instr_obj in enumerate(tac_instructions):
-            instr_str = str(instr_obj).strip()
-            if not instr_str:
-                continue
-            
-            print(f"  [{i}] {instr_str[:60]}")
-            
-            # Parse ASSIGN: ASSIGN t=varname a1=value
-            assign_match = re.match(r'ASSIGN\s+t=(\w+)\s+a1=(\w+)', instr_str)
-            if assign_match:
-                var_name = assign_match.group(1)
-                value = assign_match.group(2)
-                
-                print(f"    ✓ ASSIGN {var_name} = {value}")
-                
-                # Track variable if first time seeing it
-                if var_name not in variables:
-                    variables[var_name] = var_counter * 4
-                    var_counter += 1
-                
-                instructions.append(('ASSIGN', var_name, value))
-                continue
-            
-            # Parse ADD: ADD t=result a1=var1 a2=var2
-            add_match = re.match(r'ADD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if add_match:
-                result = add_match.group(1)
-                var1 = add_match.group(2)
-                var2 = add_match.group(3)
-                
-                print(f"    ✓ ADD {result} = {var1} + {var2}")
-                
-                # Track variables
-                if result not in variables:
-                    variables[result] = var_counter * 4
-                    var_counter += 1
-                
-                instructions.append(('ADD', result, var1, var2))
-                continue
-            
-            # Parse WRITE: WRITE a1=varname
-            write_match = re.match(r'WRITE\s+a1=(\w+)', instr_str)
-            if write_match:
-                var_name = write_match.group(1)
-                print(f"    ✓ WRITE {var_name}")
-                write_vars.append(var_name)
-                instructions.append(('WRITE', var_name))
-                continue
-            
-            # Parse SUB: SUB t=result a1=var1 a2=var2
-            sub_match = re.match(r'SUB\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if sub_match:
-                result = sub_match.group(1)
-                var1 = sub_match.group(2)
-                var2 = sub_match.group(3)
-                print(f"    ✓ SUB {result} = {var1} - {var2}")
-                if result not in variables:
-                    variables[result] = var_counter * 4
-                    var_counter += 1
-                instructions.append(('SUB', result, var1, var2))
-                continue
-            
-            # Parse MUL: MUL t=result a1=var1 a2=var2
-            mul_match = re.match(r'MUL\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if mul_match:
-                result = mul_match.group(1)
-                var1 = mul_match.group(2)
-                var2 = mul_match.group(3)
-                print(f"    ✓ MUL {result} = {var1} * {var2}")
-                if result not in variables:
-                    variables[result] = var_counter * 4
-                    var_counter += 1
-                instructions.append(('MUL', result, var1, var2))
-                continue
-            
-            # Parse DIV: DIV t=result a1=var1 a2=var2
-            div_match = re.match(r'DIV\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if div_match:
-                result = div_match.group(1)
-                var1 = div_match.group(2)
-                var2 = div_match.group(3)
-                print(f"    ✓ DIV {result} = {var1} / {var2}")
-                if result not in variables:
-                    variables[result] = var_counter * 4
-                    var_counter += 1
-                instructions.append(('DIV', result, var1, var2))
-                continue
-            
-            # Parse MOD: MOD t=result a1=var1 a2=var2
-            mod_match = re.match(r'MOD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if mod_match:
-                result = mod_match.group(1)
-                var1 = mod_match.group(2)
-                var2 = mod_match.group(3)
-                print(f"    ✓ MOD {result} = {var1} % {var2}")
-                if result not in variables:
-                    variables[result] = var_counter * 4
-                    var_counter += 1
-                instructions.append(('MOD', result, var1, var2))
-                continue
-        
-        print(f"📊 Variables: {variables}")
-        print(f"📋 Instructions: {len(instructions)} total\n")
-        
-        # Calculate stack space (4 bytes per variable, rounded up to 16)
+        # Calculate stack size
         stack_size = len(variables) * 4
         if stack_size == 0:
             stack_size = 16
         else:
             stack_size = ((stack_size + 15) // 16) * 16
         
-        # Build .data section - only for variables that are written
-        data_section = "section .data\n"
-        for var in write_vars:
-            if var in variables:
-                data_section += f'    fmt_{var} db "{var}: %d", 0xA, 0\n'
-        
         # Start assembly code
         asm_code = f'''; Generated Assembly code from NEXUS compiler
 ; Architecture: x86-64
-; Dynamically generated from TAC
 
-{data_section}
+section .data
 section .text
     extern printf
     global main
@@ -878,105 +779,212 @@ main:
     push rbp
     mov rbp, rsp
     sub rsp, {stack_size}
-    
+
 '''
         
-        # Generate code for each instruction in order
-        for instr in instructions:
-            if instr[0] == 'ASSIGN':
-                _, var_name, value = instr
-                offset = variables[var_name]
-                
-                # Check if value is numeric or a variable
-                if value[0].isdigit():  # numeric constant
-                    asm_code += f"    mov DWORD [rbp-{offset}], {value}      ; {var_name} = {value}\n"
-                else:
-                    # Value is a variable reference
-                    if value in variables:
-                        value_offset = variables[value]
-                        asm_code += f"    mov eax, DWORD [rbp-{value_offset}]   ; Load {value}\n"
-                        asm_code += f"    mov DWORD [rbp-{offset}], eax          ; Store in {var_name}\n"
-            
-            elif instr[0] == 'ADD':
-                _, result, var1, var2 = instr
-                offset_r = variables[result]
-                offset_1 = variables.get(var1)
-                offset_2 = variables.get(var2)
-                
-                if offset_1 is not None and offset_2 is not None:
-                    asm_code += f"\n    ; {result} = {var1} + {var2}\n"
-                    asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
-                    asm_code += f"    add eax, DWORD [rbp-{offset_2}]\n"
-                    asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
-            
-            elif instr[0] == 'SUB':
-                _, result, var1, var2 = instr
-                offset_r = variables[result]
-                offset_1 = variables.get(var1)
-                offset_2 = variables.get(var2)
-                
-                if offset_1 is not None and offset_2 is not None:
-                    asm_code += f"\n    ; {result} = {var1} - {var2}\n"
-                    asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
-                    asm_code += f"    sub eax, DWORD [rbp-{offset_2}]\n"
-                    asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
-            
-            elif instr[0] == 'MUL':
-                _, result, var1, var2 = instr
-                offset_r = variables[result]
-                offset_1 = variables.get(var1)
-                offset_2 = variables.get(var2)
-                
-                if offset_1 is not None and offset_2 is not None:
-                    asm_code += f"\n    ; {result} = {var1} * {var2}\n"
-                    asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
-                    asm_code += f"    imul eax, DWORD [rbp-{offset_2}]\n"
-                    asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
-            
-            elif instr[0] == 'DIV':
-                _, result, var1, var2 = instr
-                offset_r = variables[result]
-                offset_1 = variables.get(var1)
-                offset_2 = variables.get(var2)
-                
-                if offset_1 is not None and offset_2 is not None:
-                    asm_code += f"\n    ; {result} = {var1} / {var2}\n"
-                    asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
-                    asm_code += f"    cdq                           ; Sign extend eax to edx:eax\n"
-                    asm_code += f"    idiv DWORD [rbp-{offset_2}]   ; Divide edx:eax by operand\n"
-                    asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
-            
-            elif instr[0] == 'MOD':
-                _, result, var1, var2 = instr
-                offset_r = variables[result]
-                offset_1 = variables.get(var1)
-                offset_2 = variables.get(var2)
-                
-                if offset_1 is not None and offset_2 is not None:
-                    asm_code += f"\n    ; {result} = {var1} % {var2}\n"
-                    asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
-                    asm_code += f"    cdq                           ; Sign extend eax to edx:eax\n"
-                    asm_code += f"    idiv DWORD [rbp-{offset_2}]   ; Divide edx:eax by operand\n"
-                    asm_code += f"    mov eax, edx                  ; Remainder in edx\n"
-                    asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
-            
-            elif instr[0] == 'WRITE':
-                _, var_name = instr
-                if var_name in variables:
-                    offset = variables[var_name]
-                    asm_code += f"\n    ; Print {var_name}\n"
-                    asm_code += f"    lea rdi, [rel fmt_{var_name}]\n"
-                    asm_code += f"    mov esi, DWORD [rbp-{offset}]\n"
-                    asm_code += "    xor eax, eax\n"
-                    asm_code += "    call printf\n"
+        # Generate code
+        label_counter = [0]  # Use list to allow modification in nested function
+        asm_code += self._generate_assembly_block(instructions, labels_map, variables, 0, len(instructions), label_counter)
         
         # Function epilogue
-        asm_code += """
-    ; Return 0
-    xor eax, eax
+        asm_code += '''    xor eax, eax
     leave
     ret
-"""
+'''
+        
+        return asm_code
+    
+    def _generate_assembly_block(self, instructions, labels_map, variables, start_idx, end_idx, label_counter):
+        """Recursively generate assembly code with nested control flow support."""
+        from intermediate_code.intermediate_symbols import InstructionType
+        
+        asm_code = ''
+        i = start_idx
+        
+        while i < end_idx:
+            instr = instructions[i]
+            
+            # Skip labels at block start
+            if instr.instruction_type == InstructionType.LABEL:
+                asm_code += f"    {instr.label}:\n"
+                i += 1
+                continue
+            
+            # Handle if-elif-else: CMP followed by JUMP_IF_FALSE
+            if (instr.instruction_type == InstructionType.CMP and 
+                i + 1 < len(instructions) and 
+                instructions[i + 1].instruction_type == InstructionType.JUMP_IF_FALSE):
+                
+                # Extract comparison
+                arg1 = str(instr.arg1) if instr.arg1 else "0"
+                arg2 = str(instr.arg2) if instr.arg2 else "0"
+                
+                # Get offsets
+                offset1 = variables.get(arg1)
+                offset2_val = arg2
+                
+                # Generate CMP instruction
+                if offset1 is not None:
+                    if offset2_val.isdigit():
+                        asm_code += f"    mov eax, DWORD [rbp-{offset1}]\n"
+                        asm_code += f"    cmp eax, {offset2_val}\n"
+                    else:
+                        offset2 = variables.get(offset2_val)
+                        if offset2 is not None:
+                            asm_code += f"    mov eax, DWORD [rbp-{offset1}]\n"
+                            asm_code += f"    cmp eax, DWORD [rbp-{offset2}]\n"
+                
+                # Generate conditional jump
+                false_label = instructions[i + 1].label
+                asm_code += f"    jle {false_label}\n"
+                
+                i += 2  # Skip CMP and JUMP_IF_FALSE
+                
+                # Find the true jump label
+                jump_label = None
+                for j in range(i, min(i + 10, len(instructions))):
+                    if instructions[j].instruction_type == InstructionType.JUMP:
+                        jump_label = instructions[j].label
+                        break
+                
+                # Collect if-block instructions (until JUMP)
+                if_block_end = i
+                while if_block_end < len(instructions):
+                    if instructions[if_block_end].instruction_type == InstructionType.JUMP:
+                        break
+                    if_block_end += 1
+                
+                asm_code += self._generate_assembly_block(instructions, labels_map, variables, i, if_block_end, label_counter)
+                i = if_block_end
+                
+                # Handle JUMP
+                if i < len(instructions) and instructions[i].instruction_type == InstructionType.JUMP:
+                    jump_label = instructions[i].label
+                    asm_code += f"    jmp {jump_label}\n"
+                    i += 1
+                
+                continue
+            
+            # Handle regular instructions
+            if instr.instruction_type == InstructionType.ASSIGN:
+                if instr.result and instr.arg1:
+                    result = str(instr.result)
+                    arg1 = str(instr.arg1)
+                    offset = variables.get(result)
+                    
+                    if offset is not None:
+                        if arg1.isdigit():
+                            asm_code += f"    mov DWORD [rbp-{offset}], {arg1}\n"
+                        else:
+                            arg1_offset = variables.get(arg1)
+                            if arg1_offset is not None:
+                                asm_code += f"    mov eax, DWORD [rbp-{arg1_offset}]\n"
+                                asm_code += f"    mov DWORD [rbp-{offset}], eax\n"
+            
+            elif instr.instruction_type == InstructionType.WRITE:
+                if instr.arg1:
+                    arg1 = str(instr.arg1)
+                    # Check if it's a string or variable
+                    if ' ' in arg1:
+                        # It's a string with spaces - output it directly
+                        asm_code += f"    lea rdi, [rel format_str]\n"
+                        asm_code += f"    mov rsi, rdi\n"
+                        asm_code += f"    call printf\n"
+                    else:
+                        # It's a variable or identifier
+                        offset = variables.get(arg1)
+                        if offset is not None:
+                            asm_code += f"    mov esi, DWORD [rbp-{offset}]\n"
+                            asm_code += f"    lea rdi, [rel format_int]\n"
+                            asm_code += f"    xor eax, eax\n"
+                            asm_code += f"    call printf\n"
+                        else:
+                            # It's a string literal - just print it
+                            safe_arg = arg1.replace('"', '')
+                            asm_code += f"    mov rsi, rdi\n"
+                            asm_code += f"    lea rdi, [rel msg_{arg1}]\n"
+                            asm_code += f"    xor eax, eax\n"
+                            asm_code += f"    call printf\n"
+            
+            elif instr.instruction_type == InstructionType.ADD:
+                if instr.result and instr.arg1 and instr.arg2:
+                    result = str(instr.result)
+                    arg1 = str(instr.arg1)
+                    arg2 = str(instr.arg2)
+                    
+                    offset_r = variables.get(result)
+                    offset_1 = variables.get(arg1)
+                    offset_2 = variables.get(arg2)
+                    
+                    if offset_r is not None and offset_1 is not None and offset_2 is not None:
+                        asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
+                        asm_code += f"    add eax, DWORD [rbp-{offset_2}]\n"
+                        asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
+            
+            elif instr.instruction_type == InstructionType.SUB:
+                if instr.result and instr.arg1 and instr.arg2:
+                    result = str(instr.result)
+                    arg1 = str(instr.arg1)
+                    arg2 = str(instr.arg2)
+                    
+                    offset_r = variables.get(result)
+                    offset_1 = variables.get(arg1)
+                    offset_2 = variables.get(arg2)
+                    
+                    if offset_r is not None and offset_1 is not None and offset_2 is not None:
+                        asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
+                        asm_code += f"    sub eax, DWORD [rbp-{offset_2}]\n"
+                        asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
+            
+            elif instr.instruction_type == InstructionType.MUL:
+                if instr.result and instr.arg1 and instr.arg2:
+                    result = str(instr.result)
+                    arg1 = str(instr.arg1)
+                    arg2 = str(instr.arg2)
+                    
+                    offset_r = variables.get(result)
+                    offset_1 = variables.get(arg1)
+                    offset_2 = variables.get(arg2)
+                    
+                    if offset_r is not None and offset_1 is not None and offset_2 is not None:
+                        asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
+                        asm_code += f"    imul eax, DWORD [rbp-{offset_2}]\n"
+                        asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
+            
+            elif instr.instruction_type == InstructionType.DIV:
+                if instr.result and instr.arg1 and instr.arg2:
+                    result = str(instr.result)
+                    arg1 = str(instr.arg1)
+                    arg2 = str(instr.arg2)
+                    
+                    offset_r = variables.get(result)
+                    offset_1 = variables.get(arg1)
+                    offset_2 = variables.get(arg2)
+                    
+                    if offset_r is not None and offset_1 is not None and offset_2 is not None:
+                        asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
+                        asm_code += f"    cdq\n"
+                        asm_code += f"    idiv DWORD [rbp-{offset_2}]\n"
+                        asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
+            
+            elif instr.instruction_type == InstructionType.MOD:
+                if instr.result and instr.arg1 and instr.arg2:
+                    result = str(instr.result)
+                    arg1 = str(instr.arg1)
+                    arg2 = str(instr.arg2)
+                    
+                    offset_r = variables.get(result)
+                    offset_1 = variables.get(arg1)
+                    offset_2 = variables.get(arg2)
+                    
+                    if offset_r is not None and offset_1 is not None and offset_2 is not None:
+                        asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
+                        asm_code += f"    cdq\n"
+                        asm_code += f"    idiv DWORD [rbp-{offset_2}]\n"
+                        asm_code += f"    mov eax, edx\n"
+                        asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
+            
+            i += 1
         
         return asm_code
     
