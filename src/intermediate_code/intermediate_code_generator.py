@@ -252,8 +252,22 @@ class IntermediateCodeGenerator:
             left_result = self._visit(node.left)
             right_result = self._visit(node.right)
             
-            # Determine operation type
-            op = node.op if hasattr(node, 'op') else '+'
+            # If either operand failed to generate, don't create broken instruction
+            if left_result is None or right_result is None:
+                error_msg = f"Failed to generate code for binary operation operands (left: {left_result}, right: {right_result})"
+                self.tac_code.errors.append(error_msg)
+                return None
+            
+            # Determine operation type - handle both node.op and node.operator (Token)
+            op = None
+            if hasattr(node, 'operator'):
+                # operator is a Token object
+                op = node.operator.value if hasattr(node.operator, 'value') else str(node.operator)
+            elif hasattr(node, 'op'):
+                op = node.op
+            else:
+                op = '+'
+            
             instr_type = self._get_instruction_type(op)
             
             if instr_type is None:
@@ -266,8 +280,8 @@ class IntermediateCodeGenerator:
             instr = TACInstruction(
                 instruction_type=instr_type,
                 result=Operand(OperandType.TEMP, temp),
-                arg1=Operand(OperandType.VARIABLE, left_result) if left_result else None,
-                arg2=Operand(OperandType.VARIABLE, right_result) if right_result else None
+                arg1=Operand(OperandType.VARIABLE, left_result),
+                arg2=Operand(OperandType.VARIABLE, right_result)
             )
             self.tac_code.add_instruction(instr)
             
@@ -284,6 +298,12 @@ class IntermediateCodeGenerator:
     def _visit_BinaryExpressionNode(self, node) -> Optional[str]:
         """Visit binary expression (alias for BinaryOpNode)."""
         return self._visit_BinaryOpNode(node)
+    
+    def _visit_GroupingExpressionNode(self, node) -> Optional[str]:
+        """Visit grouping expression (parenthesized expression)."""
+        if hasattr(node, 'expression'):
+            return self._visit(node.expression)
+        return None
     
     def _visit_CallNode(self, node) -> Optional[str]:
         """Visit function call."""

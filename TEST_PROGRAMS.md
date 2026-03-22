@@ -73,7 +73,6 @@ show expr;
 **Difficulty:** ⭐⭐ Medium  
 **Features:** Conditional branching, comparison operators  
 **Expected Output:** "Greater" (since 20 > 10)
-**Status:** ✅ PASSING ALL PHASES
 
 ```nexus
 hold num1 = 20;
