@@ -23,6 +23,7 @@ try:
     from syntax_analysis.parser import Parser, ParseError
     from syntax_analysis.ast_nodes import ASTNode
     from syntax_analysis.ast_printer import ASTPrinter
+    from intermediate_code.intermediate_gui import IntermediateCodeGUI
 except ImportError as e:
     print(f"Warning: Could not import dependencies: {e}")
 
@@ -273,6 +274,10 @@ class SemanticAnalysisGUI:
         self.analyze_btn.pack(side='left', padx=5)
         
         ttk.Button(button_frame, text="⏮️ Reset", command=self._reset_analysis).pack(side='left', padx=5)
+        
+        # Next phase button
+        ttk.Button(button_frame, text="▶️ Next Phase (Intermediate Code)", 
+                  command=self._launch_intermediate_code).pack(side='left', padx=5)
         
         # Middle - settings
         settings_frame = ttk.Frame(control_frame)
@@ -580,6 +585,26 @@ Statistics:
         self.errors_text.config(state='disabled')
         
         self.status_label.config(text="Ready")
+    
+    def _launch_intermediate_code(self):
+        """Launch the intermediate code generation phase."""
+        try:
+            # Close this window temporarily
+            self.root.withdraw()
+            
+            # Create a new root window for intermediate code generation
+            intermediate_root = tk.Tk()
+            
+            # Create and run intermediate code generator
+            intermediate_app = IntermediateCodeGUI(intermediate_root)
+            intermediate_root.mainloop()
+            
+            # Show this window again
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Intermediate Code Generation: {str(e)}")
+            self.root.deiconify()
     
     def _load_file(self):
         """Load code from file."""

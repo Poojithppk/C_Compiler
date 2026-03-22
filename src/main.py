@@ -18,6 +18,7 @@ sys.path.append(str(project_root))
 from lexical_analysis import LexicalAnalysisGUI
 from syntax_analysis import SyntaxAnalysisGUI
 from semantic_analysis import SemanticAnalysisGUI
+from intermediate_code import IntermediateCodeGUI
 
 
 class CompilerMain:
@@ -27,8 +28,8 @@ class CompilerMain:
     Provides access to:
     - Lexical Analysis Phase (✅ Implemented)
     - Syntax Analysis Phase (✅ Implemented)
-    - Semantic Analysis Phase (🚧 Coming Soon)
-    - Intermediate Code Generation (🚧 Coming Soon)
+    - Semantic Analysis Phase (✅ Implemented)
+    - Intermediate Code Generation (✅ Implemented)
     - Optimization Phase (🚧 Coming Soon)
     - Code Generation Phase (🚧 Coming Soon)
     """
@@ -124,11 +125,11 @@ class CompilerMain:
         # Sequential Workflow Button
         self.create_phase_button(
             phases_container,
-            "🔄 LEXICAL → SYNTAX → SEMANTIC",
-            "Run all three phases in sequence",
+            "🔄 FULL PIPELINE (LEX → SYN → SEM → INT)",
+            "Run all four phases in sequence",
             "✅ READY",
             "#17a2b8",
-            self.launch_full_sequential_analysis,
+            self.launch_full_pipeline_analysis,
             row=2, col=0
         )
         
@@ -154,14 +155,14 @@ class CompilerMain:
             row=1, col=0
         )
         
-        # Phase 4: Intermediate Code (🚧 Coming Soon)
+        # Phase 4: Intermediate Code (✅ Ready)
         self.create_phase_button(
             phases_container,
             "⚙️ INTERMEDIATE CODE",
             "Three-Address Code • Control Flow • Data Flow",
-            "🚧 COMING SOON",
-            "#ffc107", 
-            lambda: self.show_coming_soon("Intermediate Code Generation"),
+            "✅ READY",
+            "#28a745", 
+            self.launch_intermediate_analysis,
             row=1, col=1
         )
         
@@ -315,11 +316,12 @@ Phase 3: ✅ SEMANTIC ANALYSIS - COMPLETE
 • Scope resolution and nesting
 • Semantic error detection and reporting
 
-Phase 4: 🚧 INTERMEDIATE CODE GENERATION - PLANNED
+Phase 4: ✅ INTERMEDIATE CODE GENERATION - COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 • Three-address code generation
 • Control flow graph construction
 • Data flow analysis
+• Basic optimization framework
 
 Phase 5: 🚧 OPTIMIZATION - PLANNED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -359,16 +361,16 @@ Phase 6: 🚧 CODE GENERATION - PLANNED
 
 🎯 NEXT MILESTONES:
 1. ✅ Lexical Analysis Phase - COMPLETE
-2. 🚧 Syntax Analysis Phase - IN PROGRESS (Week 1)
+2. ✅ Syntax Analysis Phase - COMPLETE
 3. ✅ Semantic Analysis Phase - COMPLETE
-4. Intermediate Code Generator (Week 2)
-5. Optimization Engine (Week 3)
-6. Multi-Target Code Generation (Week 4-5)
+4. ✅ Intermediate Code Generator - COMPLETE
+5. Optimization Engine (Week 2)
+6. Multi-Target Code Generation (Week 3-4)
 
-📅 TARGET COMPLETION: March 13, 2026
-Current Progress: 50% (3/6 phases complete)
+📅 TARGET COMPLETION: March 20, 2026
+Current Progress: 67% (4/6 phases complete)
 
-🚀 Start with Lexical Analysis to see the visual compiler in action!
+🚀 Start with Lexical Analysis or run the full pipeline to see the visual compiler in action!
         """
         
         info_text.insert(1.0, info_content.strip())
@@ -498,6 +500,28 @@ Current Progress: 50% (3/6 phases complete)
             messagebox.showerror("Error", f"Failed to launch Semantic Analysis: {str(e)}")
             self.root.deiconify()
     
+    def launch_intermediate_analysis(self):
+        """Launch the intermediate code generation phase."""
+        print("⚙️ Launching Intermediate Code Generation Phase...")
+        
+        try:
+            # Close main window temporarily
+            self.root.withdraw()
+            
+            # Create a new root window for intermediate code generation
+            intermediate_root = tk.Tk()
+            
+            # Create and run intermediate code generator
+            intermediate_app = IntermediateCodeGUI(intermediate_root)
+            intermediate_root.mainloop()
+            
+            # Show main window again after intermediate code analyzer closes
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Intermediate Code Generation: {str(e)}")
+            self.root.deiconify()
+    
     def launch_sequential_analysis(self):
         """Launch lexical analysis followed by syntax analysis."""
         print("🔄 Launching Sequential Analysis: Lexical → Syntax...")
@@ -536,9 +560,9 @@ Current Progress: 50% (3/6 phases complete)
             messagebox.showerror("Error", f"Failed to launch Sequential Analysis: {str(e)}")
             self.root.deiconify()
 
-    def launch_full_sequential_analysis(self):
-        """Launch full sequential analysis: Lexical → Syntax → Semantic."""
-        print("🔄 Launching Full Sequential Analysis: Lexical → Syntax → Semantic...")
+    def launch_full_pipeline_analysis(self):
+        """Launch full pipeline analysis: Lexical → Syntax → Semantic → Intermediate Code."""
+        print("🔄 Launching Full Pipeline Analysis: Lexical → Syntax → Semantic → Intermediate Code...")
         
         try:
             # Close main window temporarily
@@ -551,13 +575,13 @@ Current Progress: 50% (3/6 phases complete)
             
             # Ask user if they want to proceed to syntax analysis
             proceed_to_syntax = messagebox.askyesno(
-                "Sequential Analysis", 
+                "Pipeline Analysis", 
                 "✅ Lexical Analysis completed!\n\n🌳 Proceed to Syntax Analysis phase?",
                 icon='question'
             )
             
             if not proceed_to_syntax:
-                print("📍 Sequential analysis stopped after lexical phase.")
+                print("📍 Pipeline analysis stopped after lexical phase.")
                 self.root.deiconify()
                 return
             
@@ -569,13 +593,13 @@ Current Progress: 50% (3/6 phases complete)
             
             # Ask user if they want to proceed to semantic analysis
             proceed_to_semantic = messagebox.askyesno(
-                "Sequential Analysis",
+                "Pipeline Analysis",
                 "✅ Syntax Analysis completed!\n\n🎯 Proceed to Semantic Analysis phase?",
                 icon='question'
             )
             
             if not proceed_to_semantic:
-                print("📍 Sequential analysis stopped after syntax phase.")
+                print("📍 Pipeline analysis stopped after syntax phase.")
                 self.root.deiconify()
                 return
             
@@ -585,18 +609,36 @@ Current Progress: 50% (3/6 phases complete)
             semantic_app = SemanticAnalysisGUI(semantic_root)
             semantic_root.mainloop()
             
+            # Ask user if they want to proceed to intermediate code generation
+            proceed_to_intermediate = messagebox.askyesno(
+                "Pipeline Analysis",
+                "✅ Semantic Analysis completed!\n\n⚙️ Proceed to Intermediate Code Generation phase?",
+                icon='question'
+            )
+            
+            if not proceed_to_intermediate:
+                print("📍 Pipeline analysis stopped after semantic phase.")
+                self.root.deiconify()
+                return
+            
+            # Phase 4: Intermediate Code Generation
+            print("📍 Phase 4: Starting Intermediate Code Generation...")
+            intermediate_root = tk.Tk()
+            intermediate_app = IntermediateCodeGUI(intermediate_root)
+            intermediate_root.mainloop()
+            
             messagebox.showinfo(
-                "Sequential Analysis",
-                "✅ All three phases completed successfully!\n\n📊 Complete compilation workflow executed!"
+                "Pipeline Analysis",
+                "✅ All four phases completed successfully!\n\n📊 Complete compilation pipeline executed!"
             )
             
             # Show main window again
             self.root.deiconify()
             
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to launch Sequential Analysis: {str(e)}")
+            messagebox.showerror("Error", f"Failed to launch Pipeline Analysis: {str(e)}")
             self.root.deiconify()
-            
+    
     def show_coming_soon(self, phase_name):
         """Show coming soon message for phases under development."""
         messagebox.showinfo(
