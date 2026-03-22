@@ -19,6 +19,8 @@ from lexical_analysis import LexicalAnalysisGUI
 from syntax_analysis import SyntaxAnalysisGUI
 from semantic_analysis import SemanticAnalysisGUI
 from intermediate_code import IntermediateCodeGUI
+from code_optimization import OptimizationGUI
+from targets import CodeGenerationGUI
 
 
 class CompilerMain:
@@ -166,25 +168,25 @@ class CompilerMain:
             row=1, col=1
         )
         
-        # Phase 5: Optimization (🚧 Coming Soon)
+        # Phase 5: Optimization (✅ Ready)
         self.create_phase_button(
             phases_container,
             "🚀 OPTIMIZATION",
             "Dead Code Elimination • Common Subexpression • Peephole",
-            "🚧 COMING SOON",
-            "#ffc107",
-            lambda: self.show_coming_soon("Optimization Phase"),
+            "✅ READY",
+            "#28a745",
+            self.launch_optimization,
             row=2, col=0
         )
         
-        # Phase 6: Code Generation (🚧 Coming Soon)
+        # Phase 6: Code Generation (✅ Ready)
         self.create_phase_button(
             phases_container,
             "💻 CODE GENERATION",
             "Multi-Target • Python • C • Java • Assembly",
-            "🚧 COMING SOON",
-            "#ffc107",
-            lambda: self.show_coming_soon("Code Generation"),
+            "✅ READY",
+            "#28a745",
+            self.launch_code_generation,
             row=2, col=1
         )
         
@@ -323,20 +325,23 @@ Phase 4: ✅ INTERMEDIATE CODE GENERATION - COMPLETE
 • Data flow analysis
 • Basic optimization framework
 
-Phase 5: 🚧 OPTIMIZATION - PLANNED
+Phase 5: ✅ OPTIMIZATION - COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 • Dead code elimination
 • Common subexpression elimination
 • Constant folding and propagation
 • Loop optimization
+• Peephole optimization
+• Strength reduction
 
-Phase 6: 🚧 CODE GENERATION - PLANNED
+Phase 6: ✅ CODE GENERATION - COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 • Multi-target code generation
 • Python translation
 • C code generation
 • Java bytecode generation  
 • Assembly language output
+• Export functionality
 
 🔒 SECURITY FEATURES:
 • Static vulnerability analysis
@@ -364,11 +369,11 @@ Phase 6: 🚧 CODE GENERATION - PLANNED
 2. ✅ Syntax Analysis Phase - COMPLETE
 3. ✅ Semantic Analysis Phase - COMPLETE
 4. ✅ Intermediate Code Generator - COMPLETE
-5. Optimization Engine (Week 2)
-6. Multi-Target Code Generation (Week 3-4)
+5. ✅ Code Optimization Phase - COMPLETE
+6. ✅ Multi-Target Code Generation - COMPLETE
 
-📅 TARGET COMPLETION: March 20, 2026
-Current Progress: 67% (4/6 phases complete)
+📅 TARGET COMPLETION: March 22, 2026
+Current Progress: 100% (6/6 phases complete)
 
 🚀 Start with Lexical Analysis or run the full pipeline to see the visual compiler in action!
         """
@@ -637,6 +642,50 @@ Current Progress: 67% (4/6 phases complete)
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to launch Pipeline Analysis: {str(e)}")
+            self.root.deiconify()
+    
+    def launch_optimization(self):
+        """Launch the code optimization phase."""
+        print("🚀 Launching Code Optimization Phase...")
+        
+        try:
+            # Close main window temporarily
+            self.root.withdraw()
+            
+            # Create a new root window for optimization
+            optimization_root = tk.Tk()
+            
+            # Create and run optimizer
+            optimization_app = OptimizationGUI(optimization_root)
+            optimization_root.mainloop()
+            
+            # Show main window again after optimization closes
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Code Optimization: {str(e)}")
+            self.root.deiconify()
+    
+    def launch_code_generation(self):
+        """Launch the code generation phase."""
+        print("💻 Launching Code Generation Phase...")
+        
+        try:
+            # Close main window temporarily
+            self.root.withdraw()
+            
+            # Create a new root window for code generation
+            codegen_root = tk.Tk()
+            
+            # Create and run code generator
+            codegen_app = CodeGenerationGUI(codegen_root)
+            codegen_root.mainloop()
+            
+            # Show main window again after code generation closes
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Code Generation: {str(e)}")
             self.root.deiconify()
     
     def show_coming_soon(self, phase_name):

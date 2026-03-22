@@ -198,6 +198,10 @@ class IntermediateCodeGUI:
         )
         self.status_label.pack(side='left')
         
+        # Next phase button
+        ttk.Button(status_frame, text="▶️ Next Phase (Code Optimization)", 
+                  command=self._launch_optimization).pack(side='right', padx=5, pady=5)
+        
         self.progress_label = tk.Label(
             status_frame,
             text="",
@@ -410,6 +414,42 @@ show total;
         """Update status bar."""
         self.status_label.config(text=message)
         self.root.update()
+    
+    def _launch_optimization(self):
+        """Launch the code optimization phase."""
+        try:
+            # Import here to avoid circular imports
+            from code_optimization.optimization_gui import OptimizationGUI
+            
+            # Close this window temporarily
+            self.root.withdraw()
+            
+            # Create a new root window for optimization
+            optimization_root = tk.Tk()
+            
+            # Create and run optimizer
+            optimization_app = OptimizationGUI(optimization_root)
+            
+            # If we have TAC code, pass it to optimization phase
+            if self.tac_code is not None:
+                # Get the source code for reference
+                try:
+                    source_code = self.code_input.get(1.0, tk.END).strip()
+                except:
+                    source_code = None
+                
+                # Load the TAC from this phase
+                optimization_app.load_tac_from_intermediate(self.tac_code, source_code)
+            
+            optimization_root.mainloop()
+            
+            # Show this window again
+            self.root.deiconify()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch Code Optimization: {str(e)}")
+            self.root.deiconify()
+            self.root.deiconify()
     
     def run(self):
         """Run the GUI."""
