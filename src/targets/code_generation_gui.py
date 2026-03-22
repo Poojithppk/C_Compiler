@@ -402,7 +402,7 @@ show total;
             if assign_match:
                 var_name = assign_match.group(1)
                 value = assign_match.group(2)
-                variables[var_name] = (value, None)  # (source_var, computed_value)
+                variables[var_name] = (value, None)
                 instructions.append(('ASSIGN', var_name, value))
                 continue
             
@@ -414,6 +414,46 @@ show total;
                 var2 = add_match.group(3)
                 variables[result] = (var1, var2)
                 instructions.append(('ADD', result, var1, var2))
+                continue
+            
+            # SUB
+            sub_match = re.match(r'SUB\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if sub_match:
+                result = sub_match.group(1)
+                var1 = sub_match.group(2)
+                var2 = sub_match.group(3)
+                variables[result] = (var1, var2)
+                instructions.append(('SUB', result, var1, var2))
+                continue
+            
+            # MUL
+            mul_match = re.match(r'MUL\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if mul_match:
+                result = mul_match.group(1)
+                var1 = mul_match.group(2)
+                var2 = mul_match.group(3)
+                variables[result] = (var1, var2)
+                instructions.append(('MUL', result, var1, var2))
+                continue
+            
+            # DIV
+            div_match = re.match(r'DIV\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if div_match:
+                result = div_match.group(1)
+                var1 = div_match.group(2)
+                var2 = div_match.group(3)
+                variables[result] = (var1, var2)
+                instructions.append(('DIV', result, var1, var2))
+                continue
+            
+            # MOD
+            mod_match = re.match(r'MOD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if mod_match:
+                result = mod_match.group(1)
+                var1 = mod_match.group(2)
+                var2 = mod_match.group(3)
+                variables[result] = (var1, var2)
+                instructions.append(('MOD', result, var1, var2))
                 continue
             
             # WRITE
@@ -433,14 +473,27 @@ show total;
         for instr in instructions:
             if instr[0] == 'ASSIGN':
                 _, var_name, value = instr
-                if value[0].isdigit():
-                    python_code += f'    {var_name} = {value}\n'
-                else:
-                    python_code += f'    {var_name} = {value}\n'
+                python_code += f'    {var_name} = {value}\n'
             
             elif instr[0] == 'ADD':
                 _, result, var1, var2 = instr
                 python_code += f'    {result} = {var1} + {var2}\n'
+            
+            elif instr[0] == 'SUB':
+                _, result, var1, var2 = instr
+                python_code += f'    {result} = {var1} - {var2}\n'
+            
+            elif instr[0] == 'MUL':
+                _, result, var1, var2 = instr
+                python_code += f'    {result} = {var1} * {var2}\n'
+            
+            elif instr[0] == 'DIV':
+                _, result, var1, var2 = instr
+                python_code += f'    {result} = {var1} // {var2}\n'
+            
+            elif instr[0] == 'MOD':
+                _, result, var1, var2 = instr
+                python_code += f'    {result} = {var1} % {var2}\n'
             
             elif instr[0] == 'WRITE':
                 _, var_name = instr
@@ -451,6 +504,7 @@ show total;
         python_code += '    main()\n'
         
         return python_code
+
     
     def _generate_c_code(self) -> str:
         """Generate C code from TAC."""
@@ -498,6 +552,54 @@ show total;
                 instructions.append(('ADD', result, var1, var2))
                 continue
             
+            # SUB
+            sub_match = re.match(r'SUB\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if sub_match:
+                result = sub_match.group(1)
+                var1 = sub_match.group(2)
+                var2 = sub_match.group(3)
+                variables.add(result)
+                variables.add(var1)
+                variables.add(var2)
+                instructions.append(('SUB', result, var1, var2))
+                continue
+            
+            # MUL
+            mul_match = re.match(r'MUL\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if mul_match:
+                result = mul_match.group(1)
+                var1 = mul_match.group(2)
+                var2 = mul_match.group(3)
+                variables.add(result)
+                variables.add(var1)
+                variables.add(var2)
+                instructions.append(('MUL', result, var1, var2))
+                continue
+            
+            # DIV
+            div_match = re.match(r'DIV\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if div_match:
+                result = div_match.group(1)
+                var1 = div_match.group(2)
+                var2 = div_match.group(3)
+                variables.add(result)
+                variables.add(var1)
+                variables.add(var2)
+                instructions.append(('DIV', result, var1, var2))
+                continue
+            
+            # MOD
+            mod_match = re.match(r'MOD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if mod_match:
+                result = mod_match.group(1)
+                var1 = mod_match.group(2)
+                var2 = mod_match.group(3)
+                variables.add(result)
+                variables.add(var1)
+                variables.add(var2)
+                instructions.append(('MOD', result, var1, var2))
+                continue
+            
             # WRITE
             write_match = re.match(r'WRITE\s+a1=(\w+)', instr_str)
             if write_match:
@@ -524,23 +626,37 @@ show total;
         for instr in instructions:
             if instr[0] == 'ASSIGN':
                 _, var_name, value = instr
-                if value[0].isdigit():
-                    c_code += f'    {var_name} = {value};\n'
-                else:
-                    c_code += f'    {var_name} = {value};\n'
+                c_code += f'    {var_name} = {value};\n'
             
             elif instr[0] == 'ADD':
                 _, result, var1, var2 = instr
                 c_code += f'    {result} = {var1} + {var2};\n'
             
+            elif instr[0] == 'SUB':
+                _, result, var1, var2 = instr
+                c_code += f'    {result} = {var1} - {var2};\n'
+            
+            elif instr[0] == 'MUL':
+                _, result, var1, var2 = instr
+                c_code += f'    {result} = {var1} * {var2};\n'
+            
+            elif instr[0] == 'DIV':
+                _, result, var1, var2 = instr
+                c_code += f'    {result} = {var1} / {var2};\n'
+            
+            elif instr[0] == 'MOD':
+                _, result, var1, var2 = instr
+                c_code += f'    {result} = {var1} % {var2};\n'
+            
             elif instr[0] == 'WRITE':
                 _, var_name = instr
-                c_code += f'    printf("{var_name}: %d\\\\n", {var_name});\n'
+                c_code += f'    printf("expr: %d\\n", {var_name});\n'
         
         c_code += '\n    return EXIT_SUCCESS;\n'
         c_code += '}\n'
         
         return c_code
+
     
     def _generate_java_code(self) -> str:
         """Generate Java code."""
@@ -643,6 +759,58 @@ public class Generated {
                 write_vars.append(var_name)
                 instructions.append(('WRITE', var_name))
                 continue
+            
+            # Parse SUB: SUB t=result a1=var1 a2=var2
+            sub_match = re.match(r'SUB\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if sub_match:
+                result = sub_match.group(1)
+                var1 = sub_match.group(2)
+                var2 = sub_match.group(3)
+                print(f"    ✓ SUB {result} = {var1} - {var2}")
+                if result not in variables:
+                    variables[result] = var_counter * 4
+                    var_counter += 1
+                instructions.append(('SUB', result, var1, var2))
+                continue
+            
+            # Parse MUL: MUL t=result a1=var1 a2=var2
+            mul_match = re.match(r'MUL\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if mul_match:
+                result = mul_match.group(1)
+                var1 = mul_match.group(2)
+                var2 = mul_match.group(3)
+                print(f"    ✓ MUL {result} = {var1} * {var2}")
+                if result not in variables:
+                    variables[result] = var_counter * 4
+                    var_counter += 1
+                instructions.append(('MUL', result, var1, var2))
+                continue
+            
+            # Parse DIV: DIV t=result a1=var1 a2=var2
+            div_match = re.match(r'DIV\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if div_match:
+                result = div_match.group(1)
+                var1 = div_match.group(2)
+                var2 = div_match.group(3)
+                print(f"    ✓ DIV {result} = {var1} / {var2}")
+                if result not in variables:
+                    variables[result] = var_counter * 4
+                    var_counter += 1
+                instructions.append(('DIV', result, var1, var2))
+                continue
+            
+            # Parse MOD: MOD t=result a1=var1 a2=var2
+            mod_match = re.match(r'MOD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
+            if mod_match:
+                result = mod_match.group(1)
+                var1 = mod_match.group(2)
+                var2 = mod_match.group(3)
+                print(f"    ✓ MOD {result} = {var1} % {var2}")
+                if result not in variables:
+                    variables[result] = var_counter * 4
+                    var_counter += 1
+                instructions.append(('MOD', result, var1, var2))
+                continue
         
         print(f"📊 Variables: {variables}")
         print(f"📋 Instructions: {len(instructions)} total\n")
@@ -703,6 +871,57 @@ main:
                     asm_code += f"\n    ; {result} = {var1} + {var2}\n"
                     asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
                     asm_code += f"    add eax, DWORD [rbp-{offset_2}]\n"
+                    asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
+            
+            elif instr[0] == 'SUB':
+                _, result, var1, var2 = instr
+                offset_r = variables[result]
+                offset_1 = variables.get(var1)
+                offset_2 = variables.get(var2)
+                
+                if offset_1 is not None and offset_2 is not None:
+                    asm_code += f"\n    ; {result} = {var1} - {var2}\n"
+                    asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
+                    asm_code += f"    sub eax, DWORD [rbp-{offset_2}]\n"
+                    asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
+            
+            elif instr[0] == 'MUL':
+                _, result, var1, var2 = instr
+                offset_r = variables[result]
+                offset_1 = variables.get(var1)
+                offset_2 = variables.get(var2)
+                
+                if offset_1 is not None and offset_2 is not None:
+                    asm_code += f"\n    ; {result} = {var1} * {var2}\n"
+                    asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
+                    asm_code += f"    imul eax, DWORD [rbp-{offset_2}]\n"
+                    asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
+            
+            elif instr[0] == 'DIV':
+                _, result, var1, var2 = instr
+                offset_r = variables[result]
+                offset_1 = variables.get(var1)
+                offset_2 = variables.get(var2)
+                
+                if offset_1 is not None and offset_2 is not None:
+                    asm_code += f"\n    ; {result} = {var1} / {var2}\n"
+                    asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
+                    asm_code += f"    cdq                           ; Sign extend eax to edx:eax\n"
+                    asm_code += f"    idiv DWORD [rbp-{offset_2}]   ; Divide edx:eax by operand\n"
+                    asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
+            
+            elif instr[0] == 'MOD':
+                _, result, var1, var2 = instr
+                offset_r = variables[result]
+                offset_1 = variables.get(var1)
+                offset_2 = variables.get(var2)
+                
+                if offset_1 is not None and offset_2 is not None:
+                    asm_code += f"\n    ; {result} = {var1} % {var2}\n"
+                    asm_code += f"    mov eax, DWORD [rbp-{offset_1}]\n"
+                    asm_code += f"    cdq                           ; Sign extend eax to edx:eax\n"
+                    asm_code += f"    idiv DWORD [rbp-{offset_2}]   ; Divide edx:eax by operand\n"
+                    asm_code += f"    mov eax, edx                  ; Remainder in edx\n"
                     asm_code += f"    mov DWORD [rbp-{offset_r}], eax\n"
             
             elif instr[0] == 'WRITE':
