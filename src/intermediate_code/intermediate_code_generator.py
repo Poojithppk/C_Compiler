@@ -351,9 +351,24 @@ class IntermediateCodeGenerator:
             if hasattr(node, 'expression') and node.expression:
                 expr_result = self._visit(node.expression)
                 
+                # Determine operand type: is it a literal (string/number) or a variable?
+                # Literals from ast come as-is (e.g., "text" or 42)
+                # Variables are identifiers
+                if expr_result:
+                    # Check if it's a literal value by examining the expression node type
+                    from syntax_analysis.ast_nodes import LiteralNode
+                    if isinstance(node.expression, LiteralNode):
+                        # It's a literal constant
+                        operand_type = OperandType.CONSTANT
+                    else:
+                        # It's a variable or computed value (temp)
+                        operand_type = OperandType.VARIABLE
+                else:
+                    operand_type = OperandType.VARIABLE
+                
                 instr = TACInstruction(
                     instruction_type=InstructionType.WRITE,
-                    arg1=Operand(OperandType.VARIABLE, expr_result)
+                    arg1=Operand(operand_type, expr_result)
                 )
                 self.tac_code.add_instruction(instr)
                 

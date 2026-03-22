@@ -375,129 +375,165 @@ show total;
             self.is_generating = False
     
     def _generate_python_code(self) -> str:
-        """Generate Python code from TAC."""
-        if not self.tac_code:
+        """Generate Python code from TAC with control flow support."""
+        if not self.tac_code or not hasattr(self.tac_code, 'instructions'):
             return "# Error: No TAC code available"
         
-        import re
+        from intermediate_code.intermediate_symbols import InstructionType, OperandType
         
-        # Extract instructions from TAC
-        if hasattr(self.tac_code, 'instructions'):
-            tac_instructions = self.tac_code.instructions
-        else:
-            return "# Error: Invalid TAC format"
-        
-        # Parse variables and instructions
-        variables = {}
-        instructions = []
-        write_vars = []
-        
-        for instr_obj in tac_instructions:
-            instr_str = str(instr_obj).strip()
-            if not instr_str:
-                continue
-            
-            # ASSIGN
-            assign_match = re.match(r'ASSIGN\s+t=(\w+)\s+a1=(\w+)', instr_str)
-            if assign_match:
-                var_name = assign_match.group(1)
-                value = assign_match.group(2)
-                variables[var_name] = (value, None)
-                instructions.append(('ASSIGN', var_name, value))
-                continue
-            
-            # ADD
-            add_match = re.match(r'ADD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if add_match:
-                result = add_match.group(1)
-                var1 = add_match.group(2)
-                var2 = add_match.group(3)
-                variables[result] = (var1, var2)
-                instructions.append(('ADD', result, var1, var2))
-                continue
-            
-            # SUB
-            sub_match = re.match(r'SUB\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if sub_match:
-                result = sub_match.group(1)
-                var1 = sub_match.group(2)
-                var2 = sub_match.group(3)
-                variables[result] = (var1, var2)
-                instructions.append(('SUB', result, var1, var2))
-                continue
-            
-            # MUL
-            mul_match = re.match(r'MUL\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if mul_match:
-                result = mul_match.group(1)
-                var1 = mul_match.group(2)
-                var2 = mul_match.group(3)
-                variables[result] = (var1, var2)
-                instructions.append(('MUL', result, var1, var2))
-                continue
-            
-            # DIV
-            div_match = re.match(r'DIV\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if div_match:
-                result = div_match.group(1)
-                var1 = div_match.group(2)
-                var2 = div_match.group(3)
-                variables[result] = (var1, var2)
-                instructions.append(('DIV', result, var1, var2))
-                continue
-            
-            # MOD
-            mod_match = re.match(r'MOD\s+t=(\w+)\s+a1=(\w+)\s+a2=(\w+)', instr_str)
-            if mod_match:
-                result = mod_match.group(1)
-                var1 = mod_match.group(2)
-                var2 = mod_match.group(3)
-                variables[result] = (var1, var2)
-                instructions.append(('MOD', result, var1, var2))
-                continue
-            
-            # WRITE
-            write_match = re.match(r'WRITE\s+a1=(\w+)', instr_str)
-            if write_match:
-                var_name = write_match.group(1)
-                write_vars.append(var_name)
-                instructions.append(('WRITE', var_name))
-                continue
-        
-        # Generate Python code
         python_code = '#!/usr/bin/env python3\n'
         python_code += '"""\nGenerated Python code from NEXUS compiler\n"""\n\n'
         python_code += 'def main():\n'
         
-        # Generate variable assignments
-        for instr in instructions:
-            if instr[0] == 'ASSIGN':
-                _, var_name, value = instr
-                python_code += f'    {var_name} = {value}\n'
+        instructions = self.tac_code.instructions
+        labels_map = {}  # Map label names to instruction indices
+        
+        # First pass: find all labels
+        for i, instr in enumerate(instructions):
+            if instr.instruction_type == InstructionType.LABEL and instr.label:
+                labels_map[instr.label] = i
+        
+        # Generate code
+        i = 0
+        indent_level = 1
+        
+        while i < len(instructions):
+            instr = instructions[i]
+            indent_str = '    ' * indent_level
             
-            elif instr[0] == 'ADD':
-                _, result, var1, var2 = instr
-                python_code += f'    {result} = {var1} + {var2}\n'
+            # Skip labels
+            if instr.instruction_type == InstructionType.LABEL:
+                i += 1
+                continue
             
-            elif instr[0] == 'SUB':
-                _, result, var1, var2 = instr
-                python_code += f'    {result} = {var1} - {var2}\n'
+            # Handle if-else: CMP followed by JUMP_IF_FALSE
+            if (instr.instruction_type == InstructionType.CMP and 
+                i + 1 < len(instructions) and 
+                instructions[i + 1].instruction_type == InstructionType.JUMP_IF_FALSE):
+                
+                # Extract comparison
+                arg1 = str(instr.arg1) if instr.arg1 else "0"
+                arg2 = str(instr.arg2) if instr.arg2 else "0"
+                condition = f"{arg1} > {arg2}"
+                
+                false_label = instructions[i + 1].label
+                false_label_idx = labels_map.get(false_label, len(instructions))
+                
+                python_code += f'{indent_str}if {condition}:\n'
+                indent_level += 1
+                if_indent_str = '    ' * indent_level
+                i += 2
+                
+                # Collect if-block instructions (until JUMP or false_label)
+                while i < len(instructions):
+                    if instructions[i].instruction_type == InstructionType.LABEL:
+                        # We've hit a label - if it's the false label, go to else
+                        if instructions[i].label == false_label:
+                            break
+                        i += 1
+                        continue
+                    
+                    if instructions[i].instruction_type == InstructionType.JUMP:
+                        # Skip JUMP to else block
+                        i += 1
+                        continue
+                    
+                    # Generate if-block instruction
+                    if instructions[i].instruction_type == InstructionType.WRITE:
+                        if instructions[i].arg1:
+                            value = str(instructions[i].arg1)
+                            if hasattr(instructions[i].arg1, 'type') and instructions[i].arg1.type == OperandType.CONSTANT:
+                                python_code += f'{if_indent_str}print("{value}")\n'
+                            else:
+                                python_code += f'{if_indent_str}print(f"Result: {{{value}}}")\n'
+                    elif instructions[i].instruction_type == InstructionType.ASSIGN:
+                        if instructions[i].result and instructions[i].arg1:
+                            python_code += f'{if_indent_str}{instructions[i].result} = {instructions[i].arg1}\n'
+                    elif instructions[i].instruction_type not in [InstructionType.LABEL]:
+                        # Handle other arithmetic operations
+                        if instructions[i].instruction_type == InstructionType.ADD:
+                            if instructions[i].result and instructions[i].arg1 and instructions[i].arg2:
+                                python_code += f'{if_indent_str}{instructions[i].result} = {instructions[i].arg1} + {instructions[i].arg2}\n'
+                        elif instructions[i].instruction_type == InstructionType.SUB:
+                            if instructions[i].result and instructions[i].arg1 and instructions[i].arg2:
+                                python_code += f'{if_indent_str}{instructions[i].result} = {instructions[i].arg1} - {instructions[i].arg2}\n'
+                    
+                    i += 1
+                
+                # Now handle else block if false_label exists
+                if i < len(instructions) and instructions[i].instruction_type == InstructionType.LABEL and instructions[i].label == false_label:
+                    python_code += f'    ' * (indent_level - 1) + 'else:\n'
+                    else_indent_str = '    ' * indent_level
+                    i += 1
+                    
+                    # Collect else-block instructions (until end label or end of instructions)
+                    while i < len(instructions):
+                        if instructions[i].instruction_type == InstructionType.LABEL:
+                            # End of else block
+                            break
+                        if instructions[i].instruction_type == InstructionType.JUMP:
+                            i += 1
+                            continue
+                        
+                        # Generate else-block instruction
+                        if instructions[i].instruction_type == InstructionType.WRITE:
+                            if instructions[i].arg1:
+                                value = str(instructions[i].arg1)
+                                if hasattr(instructions[i].arg1, 'type') and instructions[i].arg1.type == OperandType.CONSTANT:
+                                    python_code += f'{else_indent_str}print("{value}")\n'
+                                else:
+                                    python_code += f'{else_indent_str}print(f"Result: {{{value}}}")\n'
+                        elif instructions[i].instruction_type == InstructionType.ASSIGN:
+                            if instructions[i].result and instructions[i].arg1:
+                                python_code += f'{else_indent_str}{instructions[i].result} = {instructions[i].arg1}\n'
+                        elif instructions[i].instruction_type not in [InstructionType.LABEL]:
+                            # Handle other operations
+                            if instructions[i].instruction_type == InstructionType.ADD:
+                                if instructions[i].result and instructions[i].arg1 and instructions[i].arg2:
+                                    python_code += f'{else_indent_str}{instructions[i].result} = {instructions[i].arg1} + {instructions[i].arg2}\n'
+                            elif instructions[i].instruction_type == InstructionType.SUB:
+                                if instructions[i].result and instructions[i].arg1 and instructions[i].arg2:
+                                    python_code += f'{else_indent_str}{instructions[i].result} = {instructions[i].arg1} - {instructions[i].arg2}\n'
+                        
+                        i += 1
+                
+                indent_level -= 1
+                continue
             
-            elif instr[0] == 'MUL':
-                _, result, var1, var2 = instr
-                python_code += f'    {result} = {var1} * {var2}\n'
+            # Handle regular straight-line instructions
+            if instr.instruction_type == InstructionType.ASSIGN:
+                if instr.result and instr.arg1:
+                    python_code += f'{indent_str}{instr.result} = {instr.arg1}\n'
             
-            elif instr[0] == 'DIV':
-                _, result, var1, var2 = instr
-                python_code += f'    {result} = {var1} // {var2}\n'
+            elif instr.instruction_type == InstructionType.WRITE:
+                if instr.arg1:
+                    value = str(instr.arg1)
+                    if instr.arg1.type == OperandType.CONSTANT:
+                        python_code += f'{indent_str}print("{value}")\n'
+                    else:
+                        python_code += f'{indent_str}print(f"Result: {{{value}}}")\n'
             
-            elif instr[0] == 'MOD':
-                _, result, var1, var2 = instr
-                python_code += f'    {result} = {var1} % {var2}\n'
+            elif instr.instruction_type == InstructionType.ADD:
+                if instr.result and instr.arg1 and instr.arg2:
+                    python_code += f'{indent_str}{instr.result} = {instr.arg1} + {instr.arg2}\n'
             
-            elif instr[0] == 'WRITE':
-                _, var_name = instr
-                python_code += f'    print(f"{var_name}: {{{var_name}}}")\n'
+            elif instr.instruction_type == InstructionType.SUB:
+                if instr.result and instr.arg1 and instr.arg2:
+                    python_code += f'{indent_str}{instr.result} = {instr.arg1} - {instr.arg2}\n'
+            
+            elif instr.instruction_type == InstructionType.MUL:
+                if instr.result and instr.arg1 and instr.arg2:
+                    python_code += f'{indent_str}{instr.result} = {instr.arg1} * {instr.arg2}\n'
+            
+            elif instr.instruction_type == InstructionType.DIV:
+                if instr.result and instr.arg1 and instr.arg2:
+                    python_code += f'{indent_str}{instr.result} = {instr.arg1} // {instr.arg2}\n'
+            
+            elif instr.instruction_type == InstructionType.MOD:
+                if instr.result and instr.arg1 and instr.arg2:
+                    python_code += f'{indent_str}{instr.result} = {instr.arg1} % {instr.arg2}\n'
+            
+            i += 1
         
         python_code += '    return 0\n\n'
         python_code += 'if __name__ == "__main__":\n'
