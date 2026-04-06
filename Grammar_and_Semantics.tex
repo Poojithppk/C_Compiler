@@ -1,0 +1,537 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{float}
+
+% Code styling
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black},
+    backgroundcolor=\color{white}
+}
+
+% Header and Footer
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{NEXUS Compiler}
+\rhead{Compiler Design CS204}
+\cfoot{\thepage}
+
+\title{\textbf{NEXUS Language Compiler}\\
+\vspace{0.5cm}
+\textit{Grammar Specification and Language Semantics}\\
+\vspace{1cm}
+\large Compiler Design (CS204)}
+
+\author{
+\textbf{Indian Institute of Information Technology (IIIT)}\\
+\textbf{Kurnool, Andhra Pradesh}\\
+\vspace{1cm}
+\textbf{Submitted By:}\\
+Anjani Kumar Singh \quad (524CS0003)\\
+Poojith \quad (124CS0029)\\
+\vspace{1cm}
+\textbf{Supervised By:}\\
+Prof. Nagaraju
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\chapter{Introduction}
+
+\section{Overview}
+The NEXUS Language is a modern, imperative programming language designed with simplicity and expressiveness in mind. This compiler project implements a complete compilation pipeline that transforms NEXUS source code into multiple target languages including Python, C, and x86-64 Assembly.
+
+\section{Compilation Phases}
+The NEXUS compiler implements the following phases:
+
+\begin{enumerate}
+    \item \textbf{Lexical Analysis:} Tokenization of source code
+    \item \textbf{Syntax Analysis:} Abstract Syntax Tree (AST) generation
+    \item \textbf{Semantic Analysis:} Type checking and symbol validation
+    \item \textbf{Intermediate Code Generation:} Three-Address Code (TAC) generation
+    \item \textbf{Code Optimization:} TAC optimization with multiple strategies
+    \item \textbf{Code Generation:} Target code generation (Python, C, Assembly)
+\end{enumerate}
+
+\chapter{Language Specification}
+
+\section{Lexical Elements}
+
+\subsection{Keywords}
+The NEXUS language defines the following reserved keywords:
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Keyword} & \textbf{Purpose} & \textbf{Example} \\
+\hline
+\texttt{hold} & Variable declaration & \texttt{hold x = 5;} \\
+\hline
+\texttt{show} & Print statement & \texttt{show x;} \\
+\hline
+\texttt{when} & Conditional statement (if) & \texttt{when (x > 5) \{ ... \}} \\
+\hline
+\texttt{otherwise} & Else branch & \texttt{otherwise \{ ... \}} \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Data Types}
+The NEXUS language supports the following primitive data types:
+
+\begin{itemize}
+    \item \textbf{int:} Integer values (default type)
+    \item \textbf{string:} Text literals
+    \item \textbf{unknown:} Type inference for expressions
+\end{itemize}
+
+\subsection{Operators}
+
+\subsubsection{Arithmetic Operators}
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Operator} & \textbf{Symbol} & \textbf{Precedence} \\
+\hline
+Addition & \texttt{+} & 2 \\
+\hline
+Subtraction & \texttt{-} & 2 \\
+\hline
+Multiplication & \texttt{*} & 1 \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Relational Operators}
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+\textbf{Operator} & \textbf{Symbol} \\
+\hline
+Greater Than & \texttt{>} \\
+\hline
+Less Than & \texttt{<} \\
+\hline
+Greater Than or Equal & \texttt{>=} \\
+\hline
+Less Than or Equal & \texttt{<=} \\
+\hline
+Equal To & \texttt{==} \\
+\hline
+Not Equal To & \texttt{!=} \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Assignment Operator}
+\begin{itemize}
+    \item \textbf{Assignment:} \texttt{=}
+\end{itemize}
+
+\section{Terminals and Non-Terminals}
+
+\subsection{Terminals (Tokens)}
+Terminals are the basic symbols that form the vocabulary of the language:
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Token Type} & \textbf{Pattern} & \textbf{Example} \\
+\hline
+IDENTIFIER & \texttt{[a-zA-Z\_][a-zA-Z0-9\_]*} & \texttt{variable, expr, x} \\
+\hline
+INTEGER & \texttt{[0-9]+} & \texttt{5, 100, 2025} \\
+\hline
+STRING & \texttt{"[^"]*"} & \texttt{"Hello World"} \\
+\hline
+VAR & \texttt{hold} & \texttt{hold} \\
+\hline
+PRINT & \texttt{show} & \texttt{show} \\
+\hline
+IF & \texttt{when} & \texttt{when} \\
+\hline
+ELSE & \texttt{otherwise} & \texttt{otherwise} \\
+\hline
+ASSIGN & \texttt{=} & \texttt{=} \\
+\hline
+PLUS & \texttt{+} & \texttt{+} \\
+\hline
+MINUS & \texttt{-} & \texttt{-} \\
+\hline
+MULTIPLY & \texttt{*} & \texttt{*} \\
+\hline
+LEFT\_PAREN & \texttt{(} & \texttt{(} \\
+\hline
+RIGHT\_PAREN & \texttt{)} & \texttt{)} \\
+\hline
+LEFT\_BRACE & \texttt{\{} & \texttt{\{} \\
+\hline
+RIGHT\_BRACE & \texttt{\}} & \texttt{\}} \\
+\hline
+SEMICOLON & \texttt{;} & \texttt{;} \\
+\hline
+COMPARISON & \texttt{>, <, >=, <=, ==, !=} & \texttt{>} \\
+\hline
+NEWLINE & \texttt{$\backslash$n} & Line break \\
+\hline
+EOF & End of input & - \\
+\hline
+\end{tabular}
+\end{center}
+
+\chapter{Context-Free Grammar}
+
+\section{BNF Notation}
+The following Context-Free Grammar (CFG) defines the NEXUS language syntax in Backus-Naur Form (BNF):
+
+\lstinputlisting[language=bash, caption={NEXUS Grammar in BNF}, label=grammar_bnf]{
+grammar_rules.txt
+}
+
+\section{Grammar Rules}
+
+\subsection{Program Structure}
+\begin{verbatim}
+Program         → Statement*
+Statement       → VariableDeclaration | IfStatement | PrintStatement
+EOF             → (implicit end of input)
+\end{verbatim}
+
+\subsection{Variable Declaration}
+\begin{verbatim}
+VariableDeclaration → VAR IDENTIFIER ASSIGN Expression SEMICOLON
+                    | VAR IDENTIFIER ASSIGN Expression NEWLINE
+\end{verbatim}
+
+\textbf{Semantics:}
+\begin{itemize}
+    \item Declares a variable with the given identifier
+    \item Initializes it with an expression result
+    \item The variable type is inferred from the expression
+    \item Duplicate declarations result in semantic errors
+\end{itemize}
+
+\subsection{Expressions}
+\begin{verbatim}
+Expression      → AddSubExpr
+
+AddSubExpr      → MulDivExpr ((PLUS | MINUS) MulDivExpr)*
+
+MulDivExpr      → PrimaryExpr (MULTIPLY PrimaryExpr)*
+
+PrimaryExpr     → LITERAL
+                | IDENTIFIER
+                | LEFT_PAREN Expression RIGHT_PAREN
+\end{verbatim}
+
+\textbf{Operator Precedence (highest to lowest):}
+\begin{enumerate}
+    \item Parentheses \texttt{( )}
+    \item Multiplication \texttt{*}
+    \item Addition \texttt{+}, Subtraction \texttt{-}
+\end{enumerate}
+
+\subsection{Control Flow Statements}
+
+\subsubsection{If-Else Statement}
+\begin{verbatim}
+IfStatement     → IF LEFT_PAREN BoolExpr RIGHT_PAREN Block
+                  (ELSE Block)?
+
+BoolExpr        → Expression COMPARISON Expression
+                | Expression
+
+Block           → LEFT_BRACE Statement* RIGHT_BRACE
+\end{verbatim}
+
+\textbf{Semantics:}
+\begin{itemize}
+    \item Evaluates the condition expression
+    \item Executes ThenBranch if condition is true
+    \item Executes ElseBranch if condition is false (if provided)
+    \item Supports nested if-else statements
+    \item Creates new scope for block variables
+\end{itemize}
+
+\subsubsection{Print Statement}
+\begin{verbatim}
+PrintStatement  → PRINT (Expression | STRING) SEMICOLON
+\end{verbatim}
+
+\textbf{Semantics:}
+\begin{itemize}
+    \item Outputs the value of an expression or string literal
+    \item Expressions are evaluated before printing
+    \item String literals are printed as-is
+\end{itemize}
+
+\chapter{Semantic Analysis}
+
+\section{Type System}
+
+\subsection{Type Rules}
+\begin{itemize}
+    \item \textbf{Integer Literals:} Type is \texttt{int}
+    \item \textbf{String Literals:} Type is \texttt{string}
+    \item \textbf{Variables:} Type is inferred from initialization
+    \item \textbf{Binary Operations:}
+    \begin{itemize}
+        \item \texttt{int + int} → \texttt{int}
+        \item \texttt{int - int} → \texttt{int}
+        \item \texttt{int * int} → \texttt{int}
+        \item Mixing types results in type error
+    \end{itemize}
+    \item \textbf{Comparison Operations:} Returns boolean (int: 0 or 1)
+\end{itemize}
+
+\section{Symbol Table}
+
+The symbol table maintains information about declared identifiers:
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Attribute} & \textbf{Description} & \textbf{Value} \\
+\hline
+Name & Identifier name & string \\
+\hline
+Type & Data type & int, string, unknown \\
+\hline
+Kind & Variable/Function & variable \\
+\hline
+Scope & Declaration scope & global, local \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Scope Management}
+
+\subsection{Scope Levels}
+\begin{itemize}
+    \item \textbf{Global Scope (Level 0):} Top-level declarations
+    \item \textbf{Block Scope (Level > 0):} Variables in if/else blocks
+    \item \textbf{Scope Rules:}
+    \begin{itemize}
+        \item Variables are visible in their scope and nested scopes
+        \item Shadowing is allowed (inner scope can hide outer scope)
+        \item Duplicate declarations in same scope are not allowed
+    \end{itemize}
+\end{itemize}
+
+\section{Semantic Checks}
+
+\subsection{Type Checking}
+\begin{itemize}
+    \item All operands in binary operations must be compatible types
+    \item Comparison operators work on int types
+    \item Assignment must match variable type
+\end{itemize}
+
+\subsection{Name Resolution}
+\begin{itemize}
+    \item References must resolve to declared identifiers
+    \item Undefined variable access is reported as error
+    \item Forward references are not allowed
+\end{itemize}
+
+\subsection{Control Flow Analysis}
+\begin{itemize}
+    \item Conditions must be evaluable expressions
+    \item Nested control structures are supported
+\end{itemize}
+
+\chapter{Intermediate Code Generation}
+
+\section{Three-Address Code (TAC)}
+
+\subsection{TAC Statement Types}
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Type} & \textbf{Format} & \textbf{Example} \\
+\hline
+Assignment & \texttt{t = a op b} & \texttt{t0 = a + b} \\
+\hline
+Unary & \texttt{t = x} & \texttt{t1 = a} \\
+\hline
+Jump & \texttt{JUMP L} & \texttt{JUMP L1} \\
+\hline
+Conditional Jump & \texttt{JUMP\_IF\_FALSE L} & \texttt{JUMP\_IF\_FALSE L0} \\
+\hline
+Label & \texttt{L:} & \texttt{L0:} \\
+\hline
+Output & \texttt{WRITE a} & \texttt{WRITE result} \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Temporary Variables}
+\begin{itemize}
+    \item Temporary variables are named \texttt{t0}, \texttt{t1}, \texttt{t2}, etc.
+    \item Each complex expression generates intermediate temporaries
+    \item Register allocation can reuse temporaries after their last use
+\end{itemize}
+
+\section{Code Optimization Techniques}
+
+The compiler implements the following optimizations:
+
+\subsection{Dead Code Elimination}
+Removes unreachable code and unused variable assignments.
+
+\subsection{Constant Folding}
+Evaluates constant expressions at compile time.
+
+Example: \texttt{x = 5 + 3;} → \texttt{x = 8;}
+
+\subsection{Common Subexpression Elimination}
+Identifies and reuses results of identical expressions.
+
+Example:
+\begin{verbatim}
+t0 = a + b
+t1 = a + b  (eliminated, reuse t0)
+\end{verbatim}
+
+\subsection{Loop Unrolling}
+Unrolls simple loops for performance improvement.
+
+\subsection{Peephole Optimization}
+Performs local optimizations on instruction sequences.
+
+\subsection{Strength Reduction}
+Replaces expensive operations with cheaper ones.
+
+Example: \texttt{x * 2} → \texttt{x + x}
+
+\chapter{Code Generation}
+
+\section{Python Code Generation}
+
+Python code is generated with the following features:
+\begin{itemize}
+    \item Standard Python 3 syntax
+    \item Function wrapper: \texttt{def main()}
+    \item Return statement for compatibility
+    \item Print statements for output
+\end{itemize}
+
+\section{C Code Generation}
+
+C code generation includes:
+\begin{itemize}
+    \item Proper include headers (\texttt{stdio.h}, \texttt{stdlib.h})
+    \item Variable declarations at function start
+    \item Standard \texttt{main} function signature
+    \item \texttt{printf} for output
+\end{itemize}
+
+\section{x86-64 Assembly Generation}
+
+Assembly targets the x86-64 architecture with:
+\begin{itemize}
+    \item AMD64 calling conventions
+    \item Stack setup (prologue/epilogue)
+    \item Register allocation using \texttt{rax}, \texttt{rsi}, \texttt{rdi}, etc.
+    \item Memory addressing with stack pointer offsets
+\end{itemize}
+
+\chapter{Example Compilation}
+
+\section{Simple Expression Example}
+
+\subsubsection{Source Code}
+\begin{lstlisting}
+hold x = 5;
+hold y = 3;
+show x + y;
+\end{lstlisting}
+
+\subsubsection{Tokens Generated}
+\begin{verbatim}
+VAR, IDENTIFIER(x), ASSIGN, INTEGER(5), SEMICOLON, ...
+\end{verbatim}
+
+\subsubsection{AST Structure}
+\begin{verbatim}
+Program
+  VariableDeclaration 'x' (5)
+  VariableDeclaration 'y' (3)
+  PrintStatement (x + y)
+\end{verbatim}
+
+\subsubsection{TAC Generated}
+\begin{verbatim}
+ASSIGN t=x a1=5
+ASSIGN t=y a1=3
+ADD t=t0 a1=x a2=y
+WRITE a1=t0
+\end{verbatim}
+
+\subsubsection{Generated Python}
+\begin{lstlisting}[language=Python]
+def main():
+    x = 5
+    y = 3
+    t0 = x + y
+    print(f"Result: {t0}")
+\end{lstlisting}
+
+\chapter{Conclusion}
+
+The NEXUS compiler demonstrates a complete implementation of the compilation pipeline from lexical analysis through code generation. The language supports fundamental programming constructs with clear semantics and multiple target code generation capabilities.
+
+\section{Key Achievements}
+
+\begin{itemize}
+    \item Full lexical, syntactic, and semantic analysis
+    \item Intermediate code generation with optimization
+    \item Multi-target code generation (Python, C, Assembly)
+    \item Proper error handling and reporting
+    \item Comprehensive symbol table management
+\end{itemize}
+
+\section{Future Enhancements}
+
+\begin{itemize}
+    \item Support for loops (\texttt{while}, \texttt{for})
+    \item Function definitions and calls
+    \item Array and structure types
+    \item Advanced type system features
+    \item Garbage collection mechanisms
+\end{itemize}
+
+\vspace{2cm}
+
+\begin{center}
+\textbf{Acknowledgments}\\
+\vspace{0.5cm}
+We gratefully acknowledge Prof. Nagaraju for his guidance and support throughout this project.
+\end{center}
+
+\end{document}

@@ -1,0 +1,1072 @@
+hold a = 5;
+hold b = 3;
+hold c = 8;
+hold d = 2;
+hold e = 7;
+hold f = 4;
+hold g = 6;
+hold h = 9;
+hold i = 10;
+hold j = 11;
+
+hold expr = ((a + b * c - d) * (e + f * g - h)) 
+            + (i * j - a * b + c * d) 
+            - (e + f + g) * (h + i * (j + a * (b + c * (d - e))));
+
+show expr;
+---------------------------------------------------------------------------------------
+LEXICAL ANALYSIS
+[START] Lexical Analysis...
+==================================================
+🔍 Found: Token(VAR, 'hold', hold, Line: 1, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'a', a, Line: 1, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 1, Col: 8)
+🔍 Found: Token(INTEGER, '5', 5, Line: 1, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 1, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 1, Col: 12)
+🔍 Found: Token(VAR, 'hold', hold, Line: 2, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'b', b, Line: 2, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 2, Col: 8)
+🔍 Found: Token(INTEGER, '3', 3, Line: 2, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 2, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 2, Col: 12)
+🔍 Found: Token(VAR, 'hold', hold, Line: 3, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'c', c, Line: 3, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 3, Col: 8)
+🔍 Found: Token(INTEGER, '8', 8, Line: 3, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 3, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 3, Col: 12)
+🔍 Found: Token(VAR, 'hold', hold, Line: 4, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'd', d, Line: 4, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 4, Col: 8)
+🔍 Found: Token(INTEGER, '2', 2, Line: 4, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 4, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 4, Col: 12)
+🔍 Found: Token(VAR, 'hold', hold, Line: 5, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'e', e, Line: 5, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 5, Col: 8)
+🔍 Found: Token(INTEGER, '7', 7, Line: 5, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 5, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 5, Col: 12)
+🔍 Found: Token(VAR, 'hold', hold, Line: 6, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'f', f, Line: 6, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 6, Col: 8)
+🔍 Found: Token(INTEGER, '4', 4, Line: 6, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 6, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 6, Col: 12)
+🔍 Found: Token(VAR, 'hold', hold, Line: 7, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'g', g, Line: 7, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 7, Col: 8)
+🔍 Found: Token(INTEGER, '6', 6, Line: 7, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 7, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 7, Col: 12)
+🔍 Found: Token(VAR, 'hold', hold, Line: 8, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'h', h, Line: 8, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 8, Col: 8)
+🔍 Found: Token(INTEGER, '9', 9, Line: 8, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 8, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 8, Col: 12)
+🔍 Found: Token(VAR, 'hold', hold, Line: 9, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'i', i, Line: 9, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 9, Col: 8)
+🔍 Found: Token(INTEGER, '10', 10, Line: 9, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 9, Col: 12)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 9, Col: 13)
+🔍 Found: Token(VAR, 'hold', hold, Line: 10, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'j', j, Line: 10, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 10, Col: 8)
+🔍 Found: Token(INTEGER, '11', 11, Line: 10, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 10, Col: 12)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 10, Col: 13)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 11, Col: 1)
+🔍 Found: Token(VAR, 'hold', hold, Line: 12, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'expr', expr, Line: 12, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 12, Col: 11)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 12, Col: 13)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 12, Col: 14)
+🔍 Found: Token(IDENTIFIER, 'a', a, Line: 12, Col: 15)
+🔍 Found: Token(PLUS, '+', +, Line: 12, Col: 17)
+🔍 Found: Token(IDENTIFIER, 'b', b, Line: 12, Col: 19)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 12, Col: 21)
+🔍 Found: Token(IDENTIFIER, 'c', c, Line: 12, Col: 23)
+🔍 Found: Token(MINUS, '-', -, Line: 12, Col: 25)
+🔍 Found: Token(IDENTIFIER, 'd', d, Line: 12, Col: 27)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 12, Col: 28)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 12, Col: 30)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 12, Col: 32)
+🔍 Found: Token(IDENTIFIER, 'e', e, Line: 12, Col: 33)
+🔍 Found: Token(PLUS, '+', +, Line: 12, Col: 35)
+🔍 Found: Token(IDENTIFIER, 'f', f, Line: 12, Col: 37)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 12, Col: 39)
+🔍 Found: Token(IDENTIFIER, 'g', g, Line: 12, Col: 41)
+🔍 Found: Token(MINUS, '-', -, Line: 12, Col: 43)
+🔍 Found: Token(IDENTIFIER, 'h', h, Line: 12, Col: 45)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 12, Col: 46)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 12, Col: 47)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 12, Col: 49)
+🔍 Found: Token(PLUS, '+', +, Line: 13, Col: 13)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 13, Col: 15)
+🔍 Found: Token(IDENTIFIER, 'i', i, Line: 13, Col: 16)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 13, Col: 18)
+🔍 Found: Token(IDENTIFIER, 'j', j, Line: 13, Col: 20)
+🔍 Found: Token(MINUS, '-', -, Line: 13, Col: 22)
+🔍 Found: Token(IDENTIFIER, 'a', a, Line: 13, Col: 24)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 13, Col: 26)
+🔍 Found: Token(IDENTIFIER, 'b', b, Line: 13, Col: 28)
+🔍 Found: Token(PLUS, '+', +, Line: 13, Col: 30)
+🔍 Found: Token(IDENTIFIER, 'c', c, Line: 13, Col: 32)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 13, Col: 34)
+🔍 Found: Token(IDENTIFIER, 'd', d, Line: 13, Col: 36)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 13, Col: 37)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 13, Col: 39)
+🔍 Found: Token(MINUS, '-', -, Line: 14, Col: 13)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 14, Col: 15)
+🔍 Found: Token(IDENTIFIER, 'e', e, Line: 14, Col: 16)
+🔍 Found: Token(PLUS, '+', +, Line: 14, Col: 18)
+🔍 Found: Token(IDENTIFIER, 'f', f, Line: 14, Col: 20)
+🔍 Found: Token(PLUS, '+', +, Line: 14, Col: 22)
+🔍 Found: Token(IDENTIFIER, 'g', g, Line: 14, Col: 24)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 14, Col: 25)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 14, Col: 27)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 14, Col: 29)
+🔍 Found: Token(IDENTIFIER, 'h', h, Line: 14, Col: 30)
+🔍 Found: Token(PLUS, '+', +, Line: 14, Col: 32)
+🔍 Found: Token(IDENTIFIER, 'i', i, Line: 14, Col: 34)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 14, Col: 36)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 14, Col: 38)
+🔍 Found: Token(IDENTIFIER, 'j', j, Line: 14, Col: 39)
+🔍 Found: Token(PLUS, '+', +, Line: 14, Col: 41)
+🔍 Found: Token(IDENTIFIER, 'a', a, Line: 14, Col: 43)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 14, Col: 45)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 14, Col: 47)
+🔍 Found: Token(IDENTIFIER, 'b', b, Line: 14, Col: 48)
+🔍 Found: Token(PLUS, '+', +, Line: 14, Col: 50)
+🔍 Found: Token(IDENTIFIER, 'c', c, Line: 14, Col: 52)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 14, Col: 54)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 14, Col: 56)
+🔍 Found: Token(IDENTIFIER, 'd', d, Line: 14, Col: 57)
+🔍 Found: Token(MINUS, '-', -, Line: 14, Col: 59)
+🔍 Found: Token(IDENTIFIER, 'e', e, Line: 14, Col: 61)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 14, Col: 62)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 14, Col: 63)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 14, Col: 64)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 14, Col: 65)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 14, Col: 66)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 14, Col: 67)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 15, Col: 1)
+🔍 Found: Token(PRINT, 'show', show, Line: 16, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'expr', expr, Line: 16, Col: 6)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 16, Col: 10)
+
+==================================================
+[ANALYSIS] Lexical Analysis Complete!
+[INFO] Tokens found: 140
+[SUMMARY] Errors: 0
+
+[TOKEN SUMMARY]:
+  ASSIGN: 11
+  EOF: 1
+  IDENTIFIER: 37
+  INTEGER: 10
+  LEFT_PAREN: 9
+  MINUS: 5
+  MULTIPLY: 10
+  NEWLINE: 15
+  PLUS: 9
+  PRINT: 1
+  RIGHT_PAREN: 9
+  SEMICOLON: 12
+  VAR: 11
+---------------------------------------------------------------------------------------
+AST TREE
+Program
+  Statement[0]:
+    VariableDeclaration 'a' @1:6
+      Initializer:
+        Literal 5 (INTEGER) @1:10
+  Statement[1]:
+    VariableDeclaration 'b' @2:6
+      Initializer:
+        Literal 3 (INTEGER) @2:10
+  Statement[2]:
+    VariableDeclaration 'c' @3:6
+      Initializer:
+        Literal 8 (INTEGER) @3:10
+  Statement[3]:
+    VariableDeclaration 'd' @4:6
+      Initializer:
+        Literal 2 (INTEGER) @4:10
+  Statement[4]:
+    VariableDeclaration 'e' @5:6
+      Initializer:
+        Literal 7 (INTEGER) @5:10
+  Statement[5]:
+    VariableDeclaration 'f' @6:6
+      Initializer:
+        Literal 4 (INTEGER) @6:10
+  Statement[6]:
+    VariableDeclaration 'g' @7:6
+      Initializer:
+        Literal 6 (INTEGER) @7:10
+  Statement[7]:
+    VariableDeclaration 'h' @8:6
+      Initializer:
+        Literal 9 (INTEGER) @8:10
+  Statement[8]:
+    VariableDeclaration 'i' @9:6
+      Initializer:
+        Literal 10 (INTEGER) @9:10
+  Statement[9]:
+    VariableDeclaration 'j' @10:6
+      Initializer:
+        Literal 11 (INTEGER) @10:10
+  Statement[10]:
+    VariableDeclaration 'expr' @12:6
+      Initializer:
+        BinaryExpression '-'
+          Left:
+            BinaryExpression '+'
+              Left:
+                GroupingExpression @12:13
+                  BinaryExpression '*'
+                    Left:
+                      GroupingExpression @12:14
+                        BinaryExpression '-'
+                          Left:
+                            BinaryExpression '+'
+                              Left:
+                                Identifier 'a' @12:15
+                              Right:
+                                BinaryExpression '*'
+                                  Left:
+                                    Identifier 'b' @12:19
+                                  Right:
+                                    Identifier 'c' @12:23
+                          Right:
+                            Identifier 'd' @12:27
+                    Right:
+                      GroupingExpression @12:32
+                        BinaryExpression '-'
+                          Left:
+                            BinaryExpression '+'
+                              Left:
+                                Identifier 'e' @12:33
+                              Right:
+                                BinaryExpression '*'
+                                  Left:
+                                    Identifier 'f' @12:37
+                                  Right:
+                                    Identifier 'g' @12:41
+                          Right:
+                            Identifier 'h' @12:45
+              Right:
+                GroupingExpression @13:15
+                  BinaryExpression '+'
+                    Left:
+                      BinaryExpression '-'
+                        Left:
+                          BinaryExpression '*'
+                            Left:
+                              Identifier 'i' @13:16
+                            Right:
+                              Identifier 'j' @13:20
+                        Right:
+                          BinaryExpression '*'
+                            Left:
+                              Identifier 'a' @13:24
+                            Right:
+                              Identifier 'b' @13:28
+                    Right:
+                      BinaryExpression '*'
+                        Left:
+                          Identifier 'c' @13:32
+                        Right:
+                          Identifier 'd' @13:36
+          Right:
+            BinaryExpression '*'
+              Left:
+                GroupingExpression @14:15
+                  BinaryExpression '+'
+                    Left:
+                      BinaryExpression '+'
+                        Left:
+                          Identifier 'e' @14:16
+                        Right:
+                          Identifier 'f' @14:20
+                    Right:
+                      Identifier 'g' @14:24
+              Right:
+                GroupingExpression @14:29
+                  BinaryExpression '+'
+                    Left:
+                      Identifier 'h' @14:30
+                    Right:
+                      BinaryExpression '*'
+                        Left:
+                          Identifier 'i' @14:34
+                        Right:
+                          GroupingExpression @14:38
+                            BinaryExpression '+'
+                              Left:
+                                Identifier 'j' @14:39
+                              Right:
+                                BinaryExpression '*'
+                                  Left:
+                                    Identifier 'a' @14:43
+                                  Right:
+                                    GroupingExpression @14:47
+                                      BinaryExpression '+'
+                                        Left:
+                                          Identifier 'b' @14:48
+                                        Right:
+                                          BinaryExpression '*'
+                                            Left:
+                                              Identifier 'c' @14:52
+                                            Right:
+                                              GroupingExpression @14:56
+                                                BinaryExpression '-'
+                                                  Left:
+                                                    Identifier 'd' @14:57
+                                                  Right:
+                                                    Identifier 'e' @14:61
+  Statement[11]:
+    PrintStatement @16:1
+      Identifier 'expr' @16:6
+
+SYMBOL TABLE
+============================================================
+
+Scope Level 0 (global) - 11 symbols
+------------------------------------------------------------
+  a (variable): int
+  b (variable): int
+  c (variable): int
+  d (variable): int
+  e (variable): int
+  f (variable): int
+  g (variable): int
+  h (variable): int
+  i (variable): int
+  j (variable): int
+  expr (variable): unknown
+
+
+THREE-ADDRESS CODE GENERATION
+==================================================
+
+ASSIGN t=a a1=5
+ASSIGN t=b a1=3
+ASSIGN t=c a1=8
+ASSIGN t=d a1=2
+ASSIGN t=e a1=7
+ASSIGN t=f a1=4
+ASSIGN t=g a1=6
+ASSIGN t=h a1=9
+ASSIGN t=i a1=10
+ASSIGN t=j a1=11
+MUL t=t0 a1=b a2=c
+ADD t=t1 a1=a a2=t0
+SUB t=t2 a1=t1 a2=d
+MUL t=t3 a1=f a2=g
+ADD t=t4 a1=e a2=t3
+SUB t=t5 a1=t4 a2=h
+MUL t=t6 a1=t2 a2=t5
+MUL t=t7 a1=i a2=j
+MUL t=t8 a1=a a2=b
+SUB t=t9 a1=t7 a2=t8
+MUL t=t10 a1=c a2=d
+ADD t=t11 a1=t9 a2=t10
+ADD t=t12 a1=t6 a2=t11
+ADD t=t13 a1=e a2=f
+ADD t=t14 a1=t13 a2=g
+SUB t=t15 a1=d a2=e
+MUL t=t16 a1=c a2=t15
+ADD t=t17 a1=b a2=t16
+MUL t=t18 a1=a a2=t17
+ADD t=t19 a1=j a2=t18
+MUL t=t20 a1=i a2=t19
+ADD t=t21 a1=h a2=t20
+MUL t=t22 a1=t14 a2=t21
+SUB t=t23 a1=t12 a2=t22
+ASSIGN t=expr a1=t23
+WRITE a1=expr
+
+OPTIMIZED 3-ADDRESS CODE
+============================================================
+
+Active Optimizations: Dead Code Elimination, Constant Folding, Common Subexpression, Loop Unrolling, Peephole, Strength Reduction
+
+Original Instructions: 36
+Optimized Instructions: 36
+Reduction: 0 instructions (0.0%)
+
+OPTIMIZED INSTRUCTIONS:
+------------------------------------------------------------
+ASSIGN t=a a1=5
+ASSIGN t=b a1=3
+ASSIGN t=c a1=8
+ASSIGN t=d a1=2
+ASSIGN t=e a1=7
+ASSIGN t=f a1=4
+ASSIGN t=g a1=6
+ASSIGN t=h a1=9
+ASSIGN t=i a1=10
+ASSIGN t=j a1=11
+MUL t=t0 a1=b a2=c
+ADD t=t1 a1=a a2=t0
+SUB t=t2 a1=t1 a2=d
+MUL t=t3 a1=f a2=g
+ADD t=t4 a1=e a2=t3
+SUB t=t5 a1=t4 a2=h
+MUL t=t6 a1=t2 a2=t5
+MUL t=t7 a1=i a2=j
+MUL t=t8 a1=a a2=b
+SUB t=t9 a1=t7 a2=t8
+MUL t=t10 a1=c a2=d
+ADD t=t11 a1=t9 a2=t10
+ADD t=t12 a1=t6 a2=t11
+ASSIGN t=t13 a1=11
+ASSIGN t=t14 a1=17
+SUB t=t15 a1=d a2=e
+MUL t=t16 a1=c a2=t15
+ADD t=t17 a1=b a2=t16
+MUL t=t18 a1=a a2=t17
+ADD t=t19 a1=j a2=t18
+MUL t=t20 a1=i a2=t19
+ADD t=t21 a1=h a2=t20
+MUL t=t22 a1=t14 a2=t21
+SUB t=t23 a1=t12 a2=t22
+ASSIGN t=expr a1=t23
+WRITE a1=expr
+
+last phase
+<i class="#!/usr/bin/env python3
+"""
+Generated Python code from NEXUS compiler
+"""
+
+def main():
+    a = 5
+    b = 3
+    c = 8
+    d = 2
+    e = 7
+    f = 4
+    g = 6
+    h = 9
+    i = 10
+    j = 11
+    t0 = b * c
+    t1 = a + t0
+    t2 = t1 - d
+    t3 = f * g
+    t4 = e + t3
+    t5 = t4 - h
+    t6 = t2 * t5
+    t7 = i * j
+    t8 = a * b
+    t9 = t7 - t8
+    t10 = c * d
+    t11 = t9 + t10
+    t12 = t6 + t11
+    t13 = e + f
+    t14 = t13 + g
+    t15 = d - e
+    t16 = c * t15
+    t17 = b + t16
+    t18 = a * t17
+    t19 = j + t18
+    t20 = i * t19
+    t21 = h + t20
+    t22 = t14 * t21
+    t23 = t12 - t22
+    expr = t23
+    print(f"Result: {expr}")
+    return 0
+
+if __name__ == "__main__":
+    main()
+
+c programme
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Generated C code from NEXUS compiler */
+
+int main(int argc, char* argv[]) {
+    /* Variable declarations */
+    int a;
+    int b;
+    int c;
+    int d;
+    int e;
+    int expr;
+    int f;
+    int g;
+    int h;
+    int i;
+    int j;
+    int t0;
+    int t1;
+    int t10;
+    int t11;
+    int t12;
+    int t13;
+    int t14;
+    int t15;
+    int t16;
+    int t17;
+    int t18;
+    int t19;
+    int t2;
+    int t20;
+    int t21;
+    int t22;
+    int t23;
+    int t3;
+    int t4;
+    int t5;
+    int t6;
+    int t7;
+    int t8;
+    int t9;
+
+    a = 5;
+    b = 3;
+    c = 8;
+    d = 2;
+    e = 7;
+    f = 4;
+    g = 6;
+    h = 9;
+    i = 10;
+    j = 11;
+    t0 = b * c;
+    t1 = a + t0;
+    t2 = t1 - d;
+    t3 = f * g;
+    t4 = e + t3;
+    t5 = t4 - h;
+    t6 = t2 * t5;
+    t7 = i * j;
+    t8 = a * b;
+    t9 = t7 - t8;
+    t10 = c * d;
+    t11 = t9 + t10;
+    t12 = t6 + t11;
+    t13 = e + f;
+    t14 = t13 + g;
+    t15 = d - e;
+    t16 = c * t15;
+    t17 = b + t16;
+    t18 = a * t17;
+    t19 = j + t18;
+    t20 = i * t19;
+    t21 = h + t20;
+    t22 = t14 * t21;
+    t23 = t12 - t22;
+    expr = t23;
+    printf("%d\n", expr);
+    return EXIT_SUCCESS;
+}
+
+assembly
+; Generated Assembly code from NEXUS compiler
+; Architecture: x86-64
+
+section .data
+section .text
+    extern printf
+    global main
+
+main:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 144
+
+    mov DWORD [rbp-4], 5
+    mov DWORD [rbp-8], 3
+    mov DWORD [rbp-12], 8
+    mov DWORD [rbp-16], 2
+    mov DWORD [rbp-20], 7
+    mov DWORD [rbp-24], 4
+    mov DWORD [rbp-28], 6
+    mov DWORD [rbp-32], 9
+    mov DWORD [rbp-36], 10
+    mov DWORD [rbp-40], 11
+    mov eax, DWORD [rbp-8]
+    imul eax, DWORD [rbp-12]
+    mov DWORD [rbp-44], eax
+    mov eax, DWORD [rbp-4]
+    add eax, DWORD [rbp-44]
+    mov DWORD [rbp-48], eax
+    mov eax, DWORD [rbp-48]
+    sub eax, DWORD [rbp-16]
+    mov DWORD [rbp-52], eax
+    mov eax, DWORD [rbp-24]
+    imul eax, DWORD [rbp-28]
+    mov DWORD [rbp-56], eax
+    mov eax, DWORD [rbp-20]
+    add eax, DWORD [rbp-56]
+    mov DWORD [rbp-60], eax
+    mov eax, DWORD [rbp-60]
+    sub eax, DWORD [rbp-32]
+    mov DWORD [rbp-64], eax
+    mov eax, DWORD [rbp-52]
+    imul eax, DWORD [rbp-64]
+    mov DWORD [rbp-68], eax
+    mov eax, DWORD [rbp-36]
+    imul eax, DWORD [rbp-40]
+    mov DWORD [rbp-72], eax
+    mov eax, DWORD [rbp-4]
+    imul eax, DWORD [rbp-8]
+    mov DWORD [rbp-76], eax
+    mov eax, DWORD [rbp-72]
+    sub eax, DWORD [rbp-76]
+    mov DWORD [rbp-80], eax
+    mov eax, DWORD [rbp-12]
+    imul eax, DWORD [rbp-16]
+    mov DWORD [rbp-84], eax
+    mov eax, DWORD [rbp-80]
+    add eax, DWORD [rbp-84]
+    mov DWORD [rbp-88], eax
+    mov eax, DWORD [rbp-68]
+    add eax, DWORD [rbp-88]
+    mov DWORD [rbp-92], eax
+    mov eax, DWORD [rbp-20]
+    add eax, DWORD [rbp-24]
+    mov DWORD [rbp-96], eax
+    mov eax, DWORD [rbp-96]
+    add eax, DWORD [rbp-28]
+    mov DWORD [rbp-100], eax
+    mov eax, DWORD [rbp-16]
+    sub eax, DWORD [rbp-20]
+    mov DWORD [rbp-104], eax
+    mov eax, DWORD [rbp-12]
+    imul eax, DWORD [rbp-104]
+    mov DWORD [rbp-108], eax
+    mov eax, DWORD [rbp-8]
+    add eax, DWORD [rbp-108]
+    mov DWORD [rbp-112], eax
+    mov eax, DWORD [rbp-4]
+    imul eax, DWORD [rbp-112]
+    mov DWORD [rbp-116], eax
+    mov eax, DWORD [rbp-40]
+    add eax, DWORD [rbp-116]
+    mov DWORD [rbp-120], eax
+    mov eax, DWORD [rbp-36]
+    imul eax, DWORD [rbp-120]
+    mov DWORD [rbp-124], eax
+    mov eax, DWORD [rbp-32]
+    add eax, DWORD [rbp-124]
+    mov DWORD [rbp-128], eax
+    mov eax, DWORD [rbp-100]
+    imul eax, DWORD [rbp-128]
+    mov DWORD [rbp-132], eax
+    mov eax, DWORD [rbp-92]
+    sub eax, DWORD [rbp-132]
+    mov DWORD [rbp-136], eax
+    mov eax, DWORD [rbp-136]
+    mov DWORD [rbp-140], eax
+    mov esi, DWORD [rbp-140]
+    lea rdi, [rel format_int]
+    xor eax, eax
+    call printf
+    xor eax, eax
+    leave
+    ret
+
+
+Now Programme 2
+hold a = 10;
+hold b = 5;
+hold c = 3;
+
+hold value = a + b * c;
+
+when (value > 20)
+{
+    show "Large value";
+}
+otherwise
+{
+    when (value > 10)
+    {
+        show "Medium value";
+    }
+    otherwise
+    {
+        show "Small value";
+    }
+}
+
+
+[START] Lexical Analysis...
+==================================================
+🔍 Found: Token(VAR, 'hold', hold, Line: 1, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'a', a, Line: 1, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 1, Col: 8)
+🔍 Found: Token(INTEGER, '10', 10, Line: 1, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 1, Col: 12)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 1, Col: 13)
+🔍 Found: Token(VAR, 'hold', hold, Line: 2, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'b', b, Line: 2, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 2, Col: 8)
+🔍 Found: Token(INTEGER, '5', 5, Line: 2, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 2, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 2, Col: 12)
+🔍 Found: Token(VAR, 'hold', hold, Line: 3, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'c', c, Line: 3, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 3, Col: 8)
+🔍 Found: Token(INTEGER, '3', 3, Line: 3, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 3, Col: 11)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 3, Col: 12)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 4, Col: 1)
+🔍 Found: Token(VAR, 'hold', hold, Line: 5, Col: 1)
+🔍 Found: Token(IDENTIFIER, 'value', value, Line: 5, Col: 6)
+🔍 Found: Token(ASSIGN, '=', =, Line: 5, Col: 12)
+🔍 Found: Token(IDENTIFIER, 'a', a, Line: 5, Col: 14)
+🔍 Found: Token(PLUS, '+', +, Line: 5, Col: 16)
+🔍 Found: Token(IDENTIFIER, 'b', b, Line: 5, Col: 18)
+🔍 Found: Token(MULTIPLY, '*', *, Line: 5, Col: 20)
+🔍 Found: Token(IDENTIFIER, 'c', c, Line: 5, Col: 22)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 5, Col: 23)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 5, Col: 24)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 6, Col: 1)
+🔍 Found: Token(IF, 'when', when, Line: 7, Col: 1)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 7, Col: 6)
+🔍 Found: Token(IDENTIFIER, 'value', value, Line: 7, Col: 7)
+🔍 Found: Token(GREATER_THAN, '>', >, Line: 7, Col: 13)
+🔍 Found: Token(INTEGER, '20', 20, Line: 7, Col: 15)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 7, Col: 17)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 7, Col: 18)
+🔍 Found: Token(LEFT_BRACE, '{', {, Line: 8, Col: 1)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 8, Col: 2)
+🔍 Found: Token(PRINT, 'show', show, Line: 9, Col: 5)
+🔍 Found: Token(STRING, '"Large value"', Large value, Line: 9, Col: 10)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 9, Col: 23)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 9, Col: 24)
+🔍 Found: Token(RIGHT_BRACE, '}', }, Line: 10, Col: 1)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 10, Col: 2)
+🔍 Found: Token(ELSE, 'otherwise', otherwise, Line: 11, Col: 1)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 11, Col: 10)
+🔍 Found: Token(LEFT_BRACE, '{', {, Line: 12, Col: 1)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 12, Col: 2)
+🔍 Found: Token(IF, 'when', when, Line: 13, Col: 5)
+🔍 Found: Token(LEFT_PAREN, '(', (, Line: 13, Col: 10)
+🔍 Found: Token(IDENTIFIER, 'value', value, Line: 13, Col: 11)
+🔍 Found: Token(GREATER_THAN, '>', >, Line: 13, Col: 17)
+🔍 Found: Token(INTEGER, '10', 10, Line: 13, Col: 19)
+🔍 Found: Token(RIGHT_PAREN, ')', ), Line: 13, Col: 21)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 13, Col: 22)
+🔍 Found: Token(LEFT_BRACE, '{', {, Line: 14, Col: 5)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 14, Col: 6)
+🔍 Found: Token(PRINT, 'show', show, Line: 15, Col: 9)
+🔍 Found: Token(STRING, '"Medium value"', Medium value, Line: 15, Col: 14)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 15, Col: 28)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 15, Col: 29)
+🔍 Found: Token(RIGHT_BRACE, '}', }, Line: 16, Col: 5)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 16, Col: 6)
+🔍 Found: Token(ELSE, 'otherwise', otherwise, Line: 17, Col: 5)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 17, Col: 14)
+🔍 Found: Token(LEFT_BRACE, '{', {, Line: 18, Col: 5)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 18, Col: 6)
+🔍 Found: Token(PRINT, 'show', show, Line: 19, Col: 9)
+🔍 Found: Token(STRING, '"Small value"', Small value, Line: 19, Col: 14)
+🔍 Found: Token(SEMICOLON, ';', ;, Line: 19, Col: 27)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 19, Col: 28)
+🔍 Found: Token(RIGHT_BRACE, '}', }, Line: 20, Col: 5)
+🔍 Found: Token(NEWLINE, '
+', None, Line: 20, Col: 6)
+🔍 Found: Token(RIGHT_BRACE, '}', }, Line: 21, Col: 1)
+
+==================================================
+[ANALYSIS] Lexical Analysis Complete!
+[INFO] Tokens found: 76
+[SUMMARY] Errors: 0
+
+[TOKEN SUMMARY]:
+  ASSIGN: 4
+  ELSE: 2
+  EOF: 1
+  GREATER_THAN: 2
+  IDENTIFIER: 9
+  IF: 2
+  INTEGER: 5
+  LEFT_BRACE: 4
+  LEFT_PAREN: 2
+  MULTIPLY: 1
+  NEWLINE: 20
+  PLUS: 1
+  PRINT: 3
+  RIGHT_BRACE: 4
+  RIGHT_PAREN: 2
+  SEMICOLON: 7
+  STRING: 3
+  VAR: 4
+
+rogram
+  Statement[0]:
+    VariableDeclaration 'a' @1:6
+      Initializer:
+        Literal 10 (INTEGER) @1:10
+  Statement[1]:
+    VariableDeclaration 'b' @2:6
+      Initializer:
+        Literal 5 (INTEGER) @2:10
+  Statement[2]:
+    VariableDeclaration 'c' @3:6
+      Initializer:
+        Literal 3 (INTEGER) @3:10
+  Statement[3]:
+    VariableDeclaration 'value' @5:6
+      Initializer:
+        BinaryExpression '+'
+          Left:
+            Identifier 'a' @5:14
+          Right:
+            BinaryExpression '*'
+              Left:
+                Identifier 'b' @5:18
+              Right:
+                Identifier 'c' @5:22
+  Statement[4]:
+    IfStatement @7:1
+      Condition:
+        BinaryExpression '>'
+          Left:
+            Identifier 'value' @7:7
+          Right:
+            Literal 20 (INTEGER) @7:15
+      ThenBranch:
+        Block
+          Statement[0]:
+            PrintStatement @9:5
+              Literal 'Large value' (STRING) @9:10
+      ElseBranch:
+        Block
+          Statement[0]:
+            IfStatement @13:5
+              Condition:
+                BinaryExpression '>'
+                  Left:
+                    Identifier 'value' @13:11
+                  Right:
+                    Literal 10 (INTEGER) @13:19
+              ThenBranch:
+                Block
+                  Statement[0]:
+                    PrintStatement @15:9
+                      Literal 'Medium value' (STRING) @15:14
+              ElseBranch:
+                Block
+                  Statement[0]:
+                    PrintStatement @19:9
+                      Literal 'Small value' (STRING) @19:14
+
+SYMBOL TABLE
+============================================================
+
+Scope Level 0 (global) - 4 symbols
+------------------------------------------------------------
+  a (variable): int
+  b (variable): int
+  c (variable): int
+  value (variable): int
+
+
+THREE-ADDRESS CODE GENERATION
+==================================================
+
+ASSIGN t=a a1=10
+ASSIGN t=b a1=5
+ASSIGN t=c a1=3
+MUL t=t0 a1=b a2=c
+ADD t=t1 a1=a a2=t0
+ASSIGN t=value a1=t1
+CMP t=t2 a1=value a2=20
+JUMP_IF_FALSE L0 a1=t2
+WRITE a1=Large value
+JUMP L1
+L0:
+CMP t=t3 a1=value a2=10
+JUMP_IF_FALSE L2 a1=t3
+WRITE a1=Medium value
+JUMP L3
+L2:
+WRITE a1=Small value
+L3:
+L1:
+
+OPTIMIZED 3-ADDRESS CODE
+============================================================
+
+Active Optimizations: Dead Code Elimination, Constant Folding, Common Subexpression, Loop Unrolling, Peephole, Strength Reduction
+
+Original Instructions: 19
+Optimized Instructions: 19
+Reduction: 0 instructions (0.0%)
+
+OPTIMIZED INSTRUCTIONS:
+------------------------------------------------------------
+ASSIGN t=a a1=10
+ASSIGN t=b a1=5
+ASSIGN t=c a1=3
+MUL t=t0 a1=b a2=c
+ADD t=t1 a1=a a2=t0
+ASSIGN t=value a1=t1
+CMP t=t2 a1=value a2=20
+JUMP_IF_FALSE L0 a1=t2
+WRITE a1=Large value
+JUMP L1
+L0:
+CMP t=t3 a1=value a2=10
+JUMP_IF_FALSE L2 a1=t3
+WRITE a1=Medium value
+JUMP L3
+L2:
+WRITE a1=Small value
+L3:
+L1:
+
+#!/usr/bin/env python3
+"""
+Generated Python code from NEXUS compiler
+"""
+
+def main():
+    a = 10
+    b = 5
+    c = 3
+    t0 = b * c
+    t1 = a + t0
+    value = t1
+    if value > 20:
+        print("Large value")
+    elif value > 10:
+        print("Medium value")
+    else:
+        print("Small value")
+    return 0
+
+if __name__ == "__main__":
+    main()
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Generated C code from NEXUS compiler */
+
+int main(int argc, char* argv[]) {
+    /* Variable declarations */
+    int a;
+    int b;
+    int c;
+    int t0;
+    int t1;
+    int t2;
+    int t3;
+    int value;
+
+    a = 10;
+    b = 5;
+    c = 3;
+    t0 = b * c;
+    t1 = a + t0;
+    value = t1;
+    if (value > 20) {
+        printf("Large value\n");
+    }
+    else if (value > 10) {
+        printf("Medium value\n");
+    }
+    else {
+        printf("Small value\n");
+    }
+    return EXIT_SUCCESS;
+}
+
+
+; Generated Assembly code from NEXUS compiler
+; Architecture: x86-64
+
+section .data
+section .text
+    extern printf
+    global main
+
+main:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+
+    mov DWORD [rbp-4], 10
+    mov DWORD [rbp-8], 5
+    mov DWORD [rbp-12], 3
+    mov eax, DWORD [rbp-8]
+    imul eax, DWORD [rbp-12]
+    mov DWORD [rbp-16], eax
+    mov eax, DWORD [rbp-4]
+    add eax, DWORD [rbp-16]
+    mov DWORD [rbp-20], eax
+    mov eax, DWORD [rbp-20]
+    mov DWORD [rbp-24], eax
+    mov eax, DWORD [rbp-24]
+    cmp eax, 20
+    jle L0
+    lea rdi, [rel format_str]
+    mov rsi, rdi
+    call printf
+    jmp L1
+    L0:
+    mov eax, DWORD [rbp-24]
+    cmp eax, 10
+    jle L2
+    lea rdi, [rel format_str]
+    mov rsi, rdi
+    call printf
+    jmp L3
+    L2:
+    lea rdi, [rel format_str]
+    mov rsi, rdi
+    call printf
+    L3:
+    L1:
+    xor eax, eax
+    leave
+    ret

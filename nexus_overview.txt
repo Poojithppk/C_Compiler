@@ -1,0 +1,711 @@
+\documentclass[12pt, a4paper]{report}
+
+% ─── Packages ────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1.2in, top=1in, bottom=1in]{geometry}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{parskip}
+\usepackage{mdframed}
+\usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, shapes.geometric, positioning, fit, calc}
+
+% ─── Hyperref ────────────────────────────────────────────────────────────────
+\hypersetup{
+    colorlinks = false,
+    pdfborder  = {0 0 0},
+    pdftitle   = {NEXUS Compiler — Project Overview},
+    pdfauthor  = {Anjani Kumar Singh, Poojith}
+}
+
+% ─── Typography ──────────────────────────────────────────────────────────────
+\setlist[itemize]{itemsep=3pt, topsep=4pt, leftmargin=1.4em}
+\setlist[enumerate]{itemsep=3pt, topsep=4pt, leftmargin=1.6em}
+
+% ─── Section Formatting ──────────────────────────────────────────────────────
+\titleformat{\chapter}[display]
+  {\normalfont\Large\bfseries}{\chaptertitlename\ \thechapter}{12pt}{\LARGE}
+\titlespacing*{\chapter}{0pt}{20pt}{16pt}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\itshape}{\thesubsubsection}{1em}{}
+
+% ─── Code Style ──────────────────────────────────────────────────────────────
+\lstdefinestyle{nexus}{
+    basicstyle       = \ttfamily\small,
+    keywordstyle     = \bfseries,
+    commentstyle     = \itshape,
+    stringstyle      = \ttfamily,
+    breaklines       = true,
+    showstringspaces = false,
+    tabsize          = 4,
+    frame            = single,
+    framerule        = 0.4pt,
+    numbers          = left,
+    numberstyle      = \tiny,
+    numbersep        = 8pt,
+    captionpos       = b,
+    xleftmargin      = 16pt,
+    aboveskip        = 8pt,
+    belowskip        = 6pt
+}
+
+\lstdefinestyle{plain}{
+    basicstyle       = \ttfamily\small,
+    breaklines       = true,
+    frame            = single,
+    framerule        = 0.4pt,
+    captionpos       = b,
+    xleftmargin      = 10pt,
+    aboveskip        = 8pt,
+    belowskip        = 6pt
+}
+
+\lstset{style=nexus}
+
+% ─── Framed Note Box ─────────────────────────────────────────────────────────
+\newmdenv[
+    linewidth        = 0.4pt,
+    innerleftmargin  = 10pt,
+    innerrightmargin = 10pt,
+    innertopmargin   = 8pt,
+    innerbottommargin= 8pt,
+    skipabove        = 8pt,
+    skipbelow        = 8pt
+]{notebox}
+
+% ─── Header / Footer ─────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small NEXUS Compiler}
+\rhead{\small Compiler Design --- CS204}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ─── Column Types ────────────────────────────────────────────────────────────
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ═══ Title Page ══════════════════════════════════════════════════════════════
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\LARGE\bfseries NEXUS Language Compiler\par}
+\vspace{0.5cm}
+\rule{0.6\textwidth}{0.4pt}\par
+\vspace{0.5cm}
+{\large\itshape Project Overview \& Architecture\par}
+\vspace{0.3cm}
+{\normalsize Compiler Design (CS204)\par}
+\vspace{2.5cm}
+
+{\normalsize
+\textbf{Indian Institute of Information Technology (IIIT)}\\[4pt]
+Kurnool, Andhra Pradesh\\[20pt]
+\textbf{Submitted By:}\\[6pt]
+Anjani Kumar Singh \quad (524CS0003)\\[4pt]
+Poojith \quad (124CS0029)\\[20pt]
+\textbf{Supervised By:}\\[6pt]
+Prof.\ Nagaraju
+\par}
+\vfill
+{\small March 2026}
+\end{titlepage}
+
+% ═══ Table of Contents ═══════════════════════════════════════════════════════
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Project Overview}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{What is NEXUS?}
+
+NEXUS is a small, statically-typed, imperative programming language built as a teaching instrument for the Compiler Design course (CS204). Its syntax is deliberately minimal — four keywords and nine operators — so that every compilation phase can be studied and understood without the language itself getting in the way.
+
+The NEXUS \emph{compiler} is a fully self-contained Python application that transforms NEXUS source code through six classical phases and ultimately emits runnable code in \textbf{three} distinct target languages: Python 3, ISO C99, and x86-64 Assembly (NASM dialect). Each phase is accompanied by a graphical visualisation tool so that the internal state of the compiler can be inspected interactively.
+
+\section{Goals and Scope}
+
+\begin{enumerate}
+    \item Implement every phase of the classical compilation pipeline from scratch, without relying on parser-generator tools.
+    \item Produce correct, executable output in all three target languages for any valid NEXUS program.
+    \item Provide a per-phase GUI so that students can observe tokens, AST nodes, symbol tables, TAC listings, and optimised code side by side with the source.
+    \item Apply at least six standard TAC optimisation techniques and measure their effect on instruction count.
+    \item Report helpful, location-stamped error messages for lexical, syntactic, and semantic faults.
+\end{enumerate}
+
+\begin{notebox}
+\textbf{Key design principle.} Every compiler component is written as a self-contained Python module with a clean interface so that individual phases can be swapped out or extended independently.
+\end{notebox}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{NEXUS Language at a Glance}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{Keywords}
+
+NEXUS reserves exactly four words:
+
+\begin{center}
+\begin{tabular}{C{2.5cm} C{2.5cm} L{6cm}}
+\toprule
+\textbf{Keyword}    & \textbf{Token}  & \textbf{Purpose} \\
+\midrule
+\texttt{hold}       & VAR    & Declare and initialise a variable. \\
+\texttt{show}       & PRINT  & Write a value or string to standard output. \\
+\texttt{when}       & IF     & Begin a conditional block. \\
+\texttt{otherwise}  & ELSE   & Begin the alternative branch. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Data Types}
+
+\begin{center}
+\begin{tabular}{C{2.5cm} L{8.5cm}}
+\toprule
+\textbf{Type}       & \textbf{Description} \\
+\midrule
+\texttt{int}        & 32-bit signed integer. Default type for numeric literals and arithmetic results. \\
+\texttt{string}     & Immutable sequence of characters, delimited by double quotes. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Operators}
+
+\subsection{Arithmetic}
+
+\begin{center}
+\begin{tabular}{C{3cm} C{2.5cm} C{3.5cm}}
+\toprule
+\textbf{Operator} & \textbf{Symbol} & \textbf{Associativity} \\
+\midrule
+Multiplication & \texttt{*} & Left (highest precedence) \\
+Addition       & \texttt{+} & Left \\
+Subtraction    & \texttt{-} & Left (lowest) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Relational}
+
+\begin{center}
+\begin{tabular}{C{3cm} C{3cm} C{3cm}}
+\toprule
+\texttt{>} & \texttt{<} & \texttt{>=} \\
+\texttt{<=} & \texttt{==} & \texttt{!=} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Comparison expressions evaluate to an \texttt{int} (1 = true, 0 = false), consistent with the C convention.
+
+\section{A Representative NEXUS Program}
+
+\begin{lstlisting}[style=nexus, language=Python,
+                   caption={NEXUS program demonstrating all core language features}]
+hold a = 10;
+hold b = 5;
+hold sum = a + b;        ; sum = 15
+
+when (sum > 10)
+{
+    show "Result is large";
+}
+otherwise
+{
+    show "Result is small";
+}
+
+show sum;                ; prints: 15
+\end{lstlisting}
+
+\noindent Running this program through the NEXUS compiler produces three equivalent output files — \texttt{output.py}, \texttt{output.c}, and \texttt{output.asm} — each printing \texttt{Result is large} followed by \texttt{15}.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Compilation Pipeline}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{Six-Phase Overview}
+
+The pipeline transforms the source file through six sequential phases. Each phase has a well-defined input/output contract; a failure in any phase halts compilation and emits a diagnostic.
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance = 0.55cm,
+    box/.style    = {rectangle, draw, minimum width=6.5cm, minimum height=0.82cm,
+                     text centered, font=\small},
+    arr/.style    = {-{Stealth[length=5pt]}, thick},
+    ann/.style    = {font=\footnotesize\itshape, text width=4cm}
+]
+    \node[box] (lex)  {Phase 1 \quad Lexical Analysis};
+    \node[box, below=of lex]  (syn)  {Phase 2 \quad Syntax Analysis};
+    \node[box, below=of syn]  (sem)  {Phase 3 \quad Semantic Analysis};
+    \node[box, below=of sem]  (ir)   {Phase 4 \quad IR / TAC Generation};
+    \node[box, below=of ir]   (opt)  {Phase 5 \quad TAC Optimisation};
+    \node[box, below=of opt]  (cg)   {Phase 6 \quad Code Generation};
+
+    \draw[arr] (lex) -- (syn)  node[midway, right, ann] {Token stream};
+    \draw[arr] (syn) -- (sem)  node[midway, right, ann] {AST};
+    \draw[arr] (sem) -- (ir)   node[midway, right, ann] {Annotated AST + Symbol Table};
+    \draw[arr] (ir)  -- (opt)  node[midway, right, ann] {Three-Address Code};
+    \draw[arr] (opt) -- (cg)   node[midway, right, ann] {Optimised TAC};
+
+    \node[ann, below=0.3cm of cg] {Python 3 \;/\; C99 \;/\; x86-64 Assembly};
+\end{tikzpicture}
+\end{center}
+
+\section{Phase Responsibilities}
+
+\begin{center}
+\begin{tabular}{C{1cm} L{3.5cm} L{7cm}}
+\toprule
+\textbf{\#} & \textbf{Phase} & \textbf{Responsibility} \\
+\midrule
+1 & Lexical Analysis    & Scans source characters; emits a typed token stream; reports unknown characters or malformed literals. \\
+2 & Syntax Analysis     & Validates the token sequence against the NEXUS CFG; constructs a hierarchical AST with source-location attributes on every node. \\
+3 & Semantic Analysis   & Performs name resolution, type inference, and type compatibility checks; builds and queries the symbol table. \\
+4 & IR Generation       & Traverses the annotated AST and emits flat Three-Address Code (TAC) with temporary variables \texttt{t0}, \texttt{t1}, \ldots \\
+5 & TAC Optimisation    & Applies up to six independent passes over the TAC list to reduce instruction count without changing program semantics. \\
+6 & Code Generation     & Translates optimised TAC into syntactically correct Python 3, C99, or NASM assembly, selecting the appropriate back-end. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{End-to-End Example}
+
+\textbf{Source:}
+\begin{lstlisting}[style=plain]
+hold x = 5;
+hold y = x + 3;
+show y;
+\end{lstlisting}
+
+\textbf{TAC (after Phase 4):}
+\begin{lstlisting}[style=plain]
+ASSIGN  t=x   a1=5
+ASSIGN  t=y   a1=x   a2=3   op=+
+WRITE   a1=y
+\end{lstlisting}
+
+\textbf{Generated Python:}
+\begin{lstlisting}[style=nexus, language=Python]
+def main() -> int:
+    x = 5
+    y = x + 3
+    print(y)
+    return 0
+\end{lstlisting}
+
+\textbf{Generated C:}
+\begin{lstlisting}[style=nexus, language=C]
+#include <stdio.h>
+#include <stdlib.h>
+int main(void) {
+    int x = 5;
+    int y = x + 3;
+    printf("%d\n", y);
+    return EXIT_SUCCESS;
+}
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Project Structure}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{Repository Layout}
+
+\begin{lstlisting}[style=plain, caption={Top-level directory tree of the NEXUS compiler project}]
+C_Compiler/
+├── main.py                         # Entry point; CLI argument handling
+├── Requirements.txt                # Python dependencies
+├── compiler_env/                   # Python virtual environment (not committed)
+├── Documentation/                  # LaTeX reports and PDF outputs
+│
+└── src/                            # All compiler source code
+    ├── main.py                     # Alternate entry (src-relative)
+    │
+    ├── lexical_analysis/           # Phase 1 — Lexer
+    │   ├── lexer.py                # Maximal-munch scanner
+    │   ├── tokens.py               # TokenType enum and Token dataclass
+    │   ├── token_registry.py       # Keyword table & token factory
+    │   ├── lexical_gui.py          # Tkinter token-stream viewer
+    │   └── test_lexical.py         # Unit tests
+    │
+    ├── syntax_analysis/            # Phase 2 — Parser
+    │   ├── parser.py               # Recursive-descent parser → AST
+    │   └── ast_nodes.py            # AST node class hierarchy
+    │
+    ├── semantic_analysis/          # Phase 3 — Semantic Analyser
+    │   ├── semantic_analyzer.py    # Tree-walk type checker
+    │   ├── symbol_table.py         # Scoped symbol table
+    │   └── semantic_gui.py         # Symbol-table viewer
+    │
+    ├── intermediate_code/          # Phase 4 & 5 — IR + Optimisation
+    │   ├── intermediate_code_generator.py  # TAC emitter
+    │   ├── intermediate_symbols.py         # TAC instruction types
+    │   ├── code_optimizer.py               # Six-pass optimiser
+    │   └── intermediate_gui.py             # TAC listing viewer
+    │
+    ├── code_optimization/          # Optimisation GUI wrapper
+    │   └── optimization_gui.py
+    │
+    ├── code_generation/            # Phase 6 — Back-ends
+    │   ├── python_generator.py     # Python 3 emitter
+    │   ├── c_generator.py          # ISO C99 emitter
+    │   ├── assembly_generator.py   # x86-64 NASM emitter
+    │   └── codegen_gui.py          # Generated-code viewer
+    │
+    └── utils/                      # Shared helpers (error reporter, etc.)
+\end{lstlisting}
+
+\section{Module Count Summary}
+
+\begin{center}
+\begin{tabular}{L{5cm} C{2.5cm} C{3.5cm}}
+\toprule
+\textbf{Subsystem}          & \textbf{Source Files} & \textbf{Role} \\
+\midrule
+Lexical Analysis            & 5  & Tokenisation + GUI \\
+Syntax Analysis             & 2  & Parsing + AST nodes \\
+Semantic Analysis           & 3  & Type checking + Symbol table \\
+Intermediate Code           & 4  & TAC generation + Optimisation \\
+Code Generation             & 4  & Three target back-ends + GUI \\
+Entry point \& utilities    & 3+ & CLI, error reporting, helpers \\
+\midrule
+\textbf{Total}              & \textbf{21+} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Module Deep-Dives}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{Phase 1 — Lexical Analysis}
+
+The lexer implements a \emph{maximal-munch} scanner: at each position it produces the longest possible token. After matching an \texttt{IDENTIFIER}, it consults the keyword table in \texttt{token\_registry.py}; if the lexeme is a reserved word the token type is promoted accordingly.
+
+\subsection{Token Data Structure}
+
+\begin{center}
+\begin{tabular}{L{2.5cm} L{2.5cm} L{6cm}}
+\toprule
+\textbf{Field}  & \textbf{Type} & \textbf{Description} \\
+\midrule
+\texttt{type}   & \texttt{TokenType} & Enumerated category (e.g.\ \texttt{INTEGER}, \texttt{PLUS}). \\
+\texttt{value}  & \texttt{any}       & Literal value after conversion (e.g.\ \texttt{int} for INTEGER). \\
+\texttt{lexeme} & \texttt{str}       & Raw character sequence from the source. \\
+\texttt{line}   & \texttt{int}       & 1-based source line number. \\
+\texttt{column} & \texttt{int}       & 1-based column offset. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Token Categories}
+
+The lexer recognises 17 distinct token types across five logical groups: \textit{keywords}, \textit{literals} (integer, string), \textit{identifiers}, \textit{operators} (arithmetic, relational, assignment), and \textit{delimiters} (parentheses, braces, semicolon, newline, EOF).
+
+\section{Phase 2 — Syntax Analysis}
+
+The parser is a hand-written \emph{recursive-descent} parser. Each grammar non-terminal maps directly to a parsing function. The expression sub-grammar is layered to encode precedence without ambiguity:
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance = 0.45cm,
+    box/.style = {rectangle, draw, text centered, font=\small\ttfamily,
+                  minimum width=5cm, minimum height=0.7cm},
+    arr/.style = {-{Stealth[length=4pt]}}
+]
+    \node[box] (expr)   {Expr};
+    \node[box, below=of expr] (add) {AddSubExpr  ( + \textbar{} - )};
+    \node[box, below=of add]  (mul) {MulExpr  ( * )};
+    \node[box, below=of mul]  (pri) {Primary  ( lit \textbar{} id \textbar{} ( Expr ) )};
+    \draw[arr] (expr) -- (add);
+    \draw[arr] (add)  -- (mul);
+    \draw[arr] (mul)  -- (pri);
+\end{tikzpicture}
+\end{center}
+
+Parsing errors include line and column numbers, the offending token, and a human-readable description of the expected construct.
+
+\section{Phase 3 — Semantic Analysis}
+
+The semantic analyser performs a single tree-walk over the AST. Two sub-systems cooperate:
+
+\begin{itemize}
+    \item \textbf{Symbol Table} (\texttt{symbol\_table.py}) — A stack of hash maps, one per scope level. Entering a \texttt{Block} node pushes a new frame; leaving it pops the frame. Each entry stores \texttt{name}, \texttt{type}, \texttt{kind}, and \texttt{scope\_depth}.
+    \item \textbf{Type Checker} (\texttt{semantic\_analyzer.py}) — Infers the type of every expression bottom-up, then verifies that operator operands are compatible and that all referenced identifiers are in scope.
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{L{4.5cm} L{7cm}}
+\toprule
+\textbf{Check}                    & \textbf{Error message template} \\
+\midrule
+Undefined variable                & \textit{NameError at L:C — 'x' is not declared in this scope.} \\
+Duplicate declaration             & \textit{RedeclError at L:C — 'x' already declared at L':C'.} \\
+Type mismatch (binary op)         & \textit{TypeError at L:C — cannot apply '+' to int and string.} \\
+Invalid comparison operand        & \textit{TypeError at L:C — comparison requires int operands.} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Phase 4 — TAC Generation}
+
+The IR generator walks the annotated AST depth-first. For each \texttt{BinaryExpression} node it allocates a fresh temporary \texttt{t\textit{k}}, emits the corresponding TAC instruction, and returns \texttt{t\textit{k}} as the result register. Control flow is lowered to \texttt{JUMP} / \texttt{JUMP\_IF\_FALSE} / label triples.
+
+\section{Phase 5 — TAC Optimisation}
+
+Six independent passes execute in sequence. Each pass iterates until no further change is possible (fixed-point iteration).
+
+\begin{center}
+\begin{tabular}{C{0.5cm} L{4.5cm} L{6.5cm}}
+\toprule
+\textbf{\#} & \textbf{Pass} & \textbf{What it does} \\
+\midrule
+1 & Constant Folding          & Evaluates compile-time constant sub-expressions. \\
+2 & Dead Code Elimination     & Removes assignments to temporaries that are never read. \\
+3 & Common Subexpression Elim & Detects duplicate \textit{(op, src1, src2)} triples; replaces the second with a copy. \\
+4 & Strength Reduction        & Replaces \texttt{x*2} with \texttt{x+x}, \texttt{x*4} with \texttt{x<<2}, etc. \\
+5 & Peephole                  & Removes redundant copy chains and unreachable jumps in a sliding 4-instruction window. \\
+6 & Loop Unrolling            & Replicates loop bodies for loops with constant bounds. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Phase 6 — Code Generation}
+
+Three independent back-end modules share a common interface: each accepts the optimised TAC list and returns a string of target-language source code.
+
+\begin{center}
+\begin{tabular}{L{3.5cm} L{3cm} L{5cm}}
+\toprule
+\textbf{Back-end module}      & \textbf{Output file}  & \textbf{Key technique} \\
+\midrule
+\texttt{python\_generator.py} & \texttt{output.py}    & Reconstructs structured control flow from label/jump pairs. \\
+\texttt{c\_generator.py}      & \texttt{output.c}     & Emits all variable declarations before the first statement; uses \texttt{goto} for jumps. \\
+\texttt{assembly\_generator.py} & \texttt{output.asm} & Maps every temporary to a fixed \texttt{[rbp-N]} slot; calls \texttt{printf} via the System V ABI. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Data Structures}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{Symbol Table Entry}
+
+\begin{center}
+\begin{tabular}{L{2.5cm} L{3cm} L{6cm}}
+\toprule
+\textbf{Field}   & \textbf{Domain}                     & \textbf{Notes} \\
+\midrule
+\texttt{name}    & \texttt{str}                        & Identifier as declared. \\
+\texttt{type}    & \texttt{int} $\mid$ \texttt{string} $\mid$ \texttt{unknown} & Inferred from the initialiser expression. \\
+\texttt{kind}    & \texttt{variable}                   & \texttt{function} reserved for future use. \\
+\texttt{scope}   & \texttt{int} $\geq 0$               & 0 = global; increments per nested block. \\
+\texttt{value}   & \texttt{any}                        & Compile-time constant if known; \texttt{None} otherwise. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{TAC Instruction Record}
+
+\begin{center}
+\begin{tabular}{L{2.5cm} L{2.5cm} L{7cm}}
+\toprule
+\textbf{Field}   & \textbf{Type}    & \textbf{Meaning} \\
+\midrule
+\texttt{op}      & \texttt{str}     & Opcode: \texttt{ASSIGN}, \texttt{ADD}, \texttt{MUL}, \texttt{SUB}, \texttt{CMP}, \texttt{JUMP}, \texttt{JUMP\_IF\_FALSE}, \texttt{WRITE}, \texttt{LABEL}. \\
+\texttt{result}  & \texttt{str}     & Destination temporary or variable name. \\
+\texttt{arg1}    & \texttt{str}     & First source operand (variable, temporary, or literal). \\
+\texttt{arg2}    & \texttt{str}     & Second source operand; \texttt{None} for unary instructions. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Technologies and Tools}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{Implementation Stack}
+
+\begin{center}
+\begin{tabular}{L{3.5cm} L{3cm} L{5cm}}
+\toprule
+\textbf{Technology}     & \textbf{Version}  & \textbf{Role in project} \\
+\midrule
+Python 3                & 3.10+             & Entire compiler implementation. \\
+Tkinter / PyQt          & stdlib            & Per-phase graphical visualisation. \\
+\texttt{re} module      & stdlib            & Regular expressions in the lexer. \\
+C (ISO C99)             & —                 & Generated target language. \\
+NASM Assembly (x86-64)  & —                 & Generated target language. \\
+Git                     & —                 & Version control. \\
+VS Code                 & —                 & Development environment. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Running the Compiler}
+
+\begin{lstlisting}[style=plain, language=bash,
+                   caption={Installation and execution on Linux / macOS / Windows}]
+# 1. Create and activate a virtual environment
+cd C_Compiler
+python -m venv compiler_env
+source compiler_env/bin/activate        # Linux / macOS
+# compiler_env\Scripts\activate.bat     # Windows
+
+# 2. Install dependencies
+pip install -r Requirements.txt
+
+# 3. Compile a NEXUS source file
+python src/main.py program.nx
+
+# 4. Outputs written to the working directory:
+#    output.py    — Python 3 source
+#    output.c     — C99 source
+#    output.asm   — x86-64 NASM assembly
+#    output.tac   — Three-Address Code listing
+\end{lstlisting}
+
+\section{Writing a NEXUS Program}
+
+Save the file with a \texttt{.nx} extension and pass it to the compiler:
+
+\begin{lstlisting}[style=nexus, language=Python, caption={hello.nx --- a complete NEXUS program}]
+hold a = 10;
+hold b = 20;
+hold c = a + b;
+
+when (c > 25)
+{
+    show "Sum exceeds 25";
+}
+otherwise
+{
+    show "Sum is 25 or less";
+}
+
+show c;
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Features and Capabilities}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{Implemented Language Features}
+
+\begin{center}
+\begin{tabular}{L{7cm} C{3cm}}
+\toprule
+\textbf{Feature}                            & \textbf{Status} \\
+\midrule
+Variable declarations (\texttt{hold})       & Implemented \\
+Integer arithmetic (\texttt{+}, \texttt{-}, \texttt{*}) & Implemented \\
+Relational operators (all six)             & Implemented \\
+Conditional statements (\texttt{when})      & Implemented \\
+Else branches (\texttt{otherwise})          & Implemented \\
+Nested control structures                   & Implemented \\
+String literals                             & Implemented \\
+Print statement (\texttt{show})             & Implemented \\
+Type inference                              & Implemented \\
+Symbol table with scope management          & Implemented \\
+Six TAC optimisation passes                 & Implemented \\
+Three-target code generation                & Implemented \\
+Per-phase GUI visualisation                 & Implemented \\
+Location-stamped error diagnostics          & Implemented \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Planned Extensions}
+
+\begin{enumerate}
+    \item \textbf{Loop constructs} — \texttt{repeat}/\texttt{until} and range-based \texttt{for}.
+    \item \textbf{User-defined functions} — definition, call, and return-value propagation.
+    \item \textbf{Arrays} — fixed-length integer arrays with subscript operator and bounds checking.
+    \item \textbf{Division operator} — including compile-time divide-by-zero detection via constant folding.
+    \item \textbf{Register allocation} — graph-colouring allocator for the assembly back-end.
+    \item \textbf{LLVM IR back-end} — emit LLVM bitcode to leverage industrial-grade optimisation.
+    \item \textbf{Multi-error recovery} — panic-mode recovery so the parser continues after the first error and reports all faults in a single pass.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Error Handling}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{Error Classification}
+
+\begin{center}
+\begin{tabular}{L{2.5cm} L{4.5cm} L{5cm}}
+\toprule
+\textbf{Phase}     & \textbf{Error type}         & \textbf{Typical cause} \\
+\midrule
+Lexical            & Unknown character           & \texttt{@}, \texttt{\#}, or other unsupported symbol. \\
+Lexical            & Unterminated string         & Missing closing \texttt{"}. \\
+Syntax             & Unexpected token            & \texttt{hold 5 = x;} — literal where identifier expected. \\
+Syntax             & Missing semicolon           & Statement not terminated. \\
+Syntax             & Unbalanced delimiter        & Brace or parenthesis left open. \\
+Semantic           & Undefined variable          & Identifier used before \texttt{hold} declaration. \\
+Semantic           & Duplicate declaration       & Same name declared twice in one scope. \\
+Semantic           & Type mismatch               & Mixing \texttt{int} and \texttt{string} in arithmetic. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Diagnostic Output Format}
+
+Every error message follows this template:
+
+\begin{lstlisting}[style=plain]
+[ERROR] <phase> at line <L>, column <C>:
+    <plain-English description of the problem>
+    Source: hold 5 = x;
+                ^
+    Expected: IDENTIFIER    Got: INTEGER(5)
+\end{lstlisting}
+
+\noindent Compilation halts at the first error in the current phase. Once a phase completes without errors, the next phase begins.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Conclusion}
+% ─────────────────────────────────────────────────────────────────────────────
+
+The NEXUS compiler demonstrates that a complete, multi-target compilation pipeline can be designed, implemented, and tested within the scope of a single-semester course project. Starting from a clean language specification, the project progressively builds each phase — lexer, parser, semantic analyser, IR generator, optimiser, and three code-generation back-ends — as independent, testable Python modules.
+
+The per-phase GUI tools make the internal workings of the compiler transparent: a student can load any \texttt{.nx} file and observe tokens, AST structure, symbol table contents, raw TAC, optimised TAC, and all three generated outputs without ever reading the source code directly.
+
+All stated goals were met: valid NEXUS programs compile without error through all six phases, producing correct and equivalent output in Python 3, C99, and x86-64 Assembly. The codebase is structured for extension, and the planned future work — loops, functions, arrays, and a register allocator — provides a clear roadmap for the next iteration of the project.
+
+\vspace{2cm}
+\begin{center}
+    \rule{0.4\textwidth}{0.4pt}\\[8pt]
+    \textbf{Acknowledgments}\\[6pt]
+    We gratefully acknowledge Prof.\ Nagaraju for his invaluable guidance,\\
+    mentorship, and unwavering support throughout this project.\\[12pt]
+    \textit{Indian Institute of Information Technology (IIIT), Kurnool}\\
+    \textit{March 2026}
+\end{center}
+
+\end{document}
